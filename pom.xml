@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.xwidgets</groupId>
-    <artifactId>xwidgets</artifactId>
+    <artifactId>xwidgets-script</artifactId>
   	<version>1.0-SNAPSHOT</version>
 
     <packaging>jar</packaging>
