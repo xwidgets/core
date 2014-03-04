@@ -86,14 +86,14 @@ xw.Sys.loadSource = function(url, callback, failCallback) {
         try {
           head.appendChild(e);           
         } catch (err) {
-          alert("There was an error loading the script from '" + url + "': " + err);
+          window.alert("There was an error loading the script from '" + url + "': " + err);
           return;
         }
         if (callback) {
           callback(url);
         }               
       } else if (req.status === 404) {
-        alert("404 error: the requested resource '" + url + "' could not be found.");
+        window.alert("404 error: the requested resource '" + url + "' could not be found.");
         if (failCallback) {
           failCallback();
         }
@@ -204,6 +204,16 @@ xw.Sys.chainEvent = function(ctl, eventName, eventFunc) {
   }
 };
 
+xw.Sys.unchainEvent = function(ctl, eventName, eventFunc) {
+  if (ctl.detachEvent) {
+    ctl.detachEvent("on" + eventName, eventFunc);
+  } else if (ctl.removeEventListener) {
+    ctl.removeEventListener(eventName, eventFunc, true);
+  } else {
+    alert("Your browser doesn't support removing event listeners");
+  }
+};
+
 xw.Sys.endsWith = function(value, suffix) {
   return value.indexOf(suffix, value.length - suffix.length) !== -1;
 };
@@ -302,7 +312,7 @@ xw.Sys.setObjectProperty = function(obj, property, value) {
 };
 
 xw.Sys.clearChildren = function(e) {
-  while (e.hasChildNodes()) {
+  while (xw.Sys.isDefined(e) && e.hasChildNodes()) {
     e.removeChild(e.firstChild);
   }
 };
