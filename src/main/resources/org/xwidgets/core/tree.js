@@ -309,12 +309,15 @@ org.xwidgets.core.Tree.onMouseDown = function(event, node) {
   xw.Sys.chainEvent(document, "mousemove", org.xwidgets.core.Tree.onMouseMove);
   xw.Sys.chainEvent(document, "mouseup", org.xwidgets.core.Tree.onMouseUp);
 
-//  event.stopPropagation();
-  // Prevent the default behaviour (of selecting text)
+  xw.Log.info("onMouseDown - events chained");
+
+  // Prevent the default browser behaviour (of selecting text)
   xw.Sys.cancelEventBubble(event);
 };
 
 org.xwidgets.core.Tree.onMouseMove = function(event) {
+  xw.Log.info("onMouseMove");
+
   var t = org.xwidgets.core.Tree;
   var u = org.xwidgets.core.TreeUtil;
   if (t.draggedNode == null) {
@@ -351,6 +354,8 @@ org.xwidgets.core.Tree.onMouseUp = function(event) {
   xw.Sys.unchainEvent(document, "mousemove", t.onMouseMove);
   xw.Sys.unchainEvent(document, "mouseup", t.onMouseUp);
   
+  xw.Log.info("onMouseUp - events unchained");
+  
   t.mouseDownStartPos = null;
 
   if (t.dragDiv) {
@@ -367,7 +372,7 @@ org.xwidgets.core.Tree.onMouseUp = function(event) {
   t.targetNode = null;
   t.draggedNode = null;
 
-  // Prevent the default behaviour (of selecting text)
+  // Prevent the default browser behaviour
   xw.Sys.cancelEventBubble(event);
 };
 

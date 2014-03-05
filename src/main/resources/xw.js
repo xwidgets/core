@@ -208,7 +208,7 @@ xw.Sys.unchainEvent = function(ctl, eventName, eventFunc) {
   if (ctl.detachEvent) {
     ctl.detachEvent("on" + eventName, eventFunc);
   } else if (ctl.removeEventListener) {
-    ctl.removeEventListener(eventName, eventFunc, true);
+    ctl.removeEventListener(eventName, eventFunc, false);
   } else {
     alert("Your browser doesn't support removing event listeners");
   }
@@ -327,6 +327,80 @@ xw.Sys.setObjectProperty = function(obj, property, value) {
 xw.Sys.clearChildren = function(e) {
   while (xw.Sys.isDefined(e) && e.hasChildNodes()) {
     e.removeChild(e.firstChild);
+  }
+};
+
+//
+// Logging
+//
+
+xw.Log = {};
+xw.Log.logWindow = null;
+xw.Log.messages = new Array();
+xw.Log.scrollback = 1000;
+xw.Log.levels = {
+  DEBUG: 100,
+  INFO: 200,
+  WARN: 300,
+  ERROR: 400
+};
+
+xw.Log.logLevel = "INFO";
+
+xw.Log.append = function(text, logLevel) {
+  var msg = {
+    text : text,
+    logLevel : logLevel,
+    timestamp : new Date()
+  };
+  if (xw.Log.levels[logLevel] <= xw.Log.levels[xw.Log.logLevel]) {
+    xw.Log.messages.push(msg);
+    while (xw.Log.messages.length > xw.Log.scrollback) {
+      xw.Log.messages.splice(0,1);
+    }
+    xw.Log.appendToWindow(msg); 
+  }
+};
+
+xw.Log.debug = function(text) {
+  xw.Log.append(text, "DEBUG");
+};
+
+xw.Log.info = function(text) {
+  xw.Log.append(text, "INFO");
+};
+
+xw.Log.warn = function(text) {
+  xw.Log.append(text, "WARN");
+};
+
+xw.Log.error = function(text) {
+  xw.Log.append(text, "ERROR");
+};
+
+xw.Log.appendToWindow = function(msg) {
+  if (xw.Log.logWindow) {
+    var formattedTime = msg.timestamp.getHours() + ":" + msg.timestamp.getMinutes() + ":" + msg.timestamp.getSeconds();
+    xw.Log.logWindow.document.write("<pre>" + formattedTime + " [" + msg.logLevel + "] " +
+      msg.text.replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;") +
+      "</pre><br/>");
+  }
+};
+
+xw.Log.display = function() {
+  var attr = "left=400,top=400,resizable=yes,scrollbars=yes,width=400,height=400";
+  xw.Log.logWindow = window.open("", "__xwidgetsDebugWindow", attr);
+  if (xw.Log.logWindow) {
+    xw.Log.logWindow.document.write("<html><head><title>XWidgets Log Window</title></head><body></body></html>");
+    var t = xw.Log.logWindow.document.getElementsByTagName("body").item(0);
+    t.style.fontFamily = "arial";
+    t.style.fontSize = "8pt";
+    
+    for (var i = 0; i < xw.Log.messages.length; i++) {
+      xw.Log.appendToWindow(xw.Log.messages[i]);
+    }
   }
 };
 
