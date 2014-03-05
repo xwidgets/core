@@ -1,5 +1,80 @@
 package("org.xwidgets.core");
 
+org.xwidgets.core.TreeNode = function(value, leaf, userObject) {
+  this.value = value;
+  this.leaf = leaf ? leaf : false;
+  this.userObject = userObject ? userObject : null;
+  this.children = new Array();
+  this.parent = null;
+  this.expanded = false;
+  this.model = null;
+  
+  var p = org.xwidgets.core.TreeNode.prototype;
+
+  p.getUserObject = function() {
+    return this.userObject;
+  }
+
+  p.setUserObject = function(obj) {
+    this.userObject = obj;
+  }
+
+  p.setModel = function(model) {
+    this.model = model;
+    for (var i = 0; i < this.children.length; i++) {
+      this.children[i].setModel(model);
+    }
+  }
+
+  p.add = function(node) {
+    node.parent = this;
+    this.children.push(node);
+    node.setModel(this.model);
+  }
+
+  p.children = function() {
+    return this.children;
+  }
+
+  p.getChildAt = function(index) {
+    return this.children[index];
+  }
+
+  p.getChildCount = function() {
+    return this.children.length;
+  }
+
+  p.getIndex = function(node) {
+    for (var i = 0; i < this.children.length; i++) {
+      if (this.children[i] == node)
+        return i;
+    }
+    return -1;
+  }
+
+  p.getParent = function() {
+    return this.parent;
+  }
+
+  p.isLeaf = function() {
+    return this.leaf;
+  }
+
+  p.remove = function(node) {
+    var found = false;
+    for (var i = 0; i < this.children.length; i++) {
+      if (this.children[i] == node)
+        found = true;
+      if (found && i < this.children.length - 1)
+        this.children[i] = this.children[i + 1];
+    }
+    if (found) {
+      this.children.length = this.children.length - 1;
+      this.model.tree.renderer.removeNode(node);
+    }
+  }
+};
+
 org.xwidgets.core.TreeModel = function(rootNode) {
   this.rootNode = rootNode;
   this.rootNode.setModel(this);
@@ -34,15 +109,12 @@ org.xwidgets.core.TreeModel = function(rootNode) {
     return this.searchChildrenForObject(this.rootNode, object);
   }
 
-  p.searchChildrenForObject = function(node, object)
-  {
-    for (var i = 0; i < node.getChildCount(); i++)
-    {
+  p.searchChildrenForObject = function(node, object) {
+    for (var i = 0; i < node.getChildCount(); i++) {
       var childNode = node.getChildAt(i);
-      if (childNode.getUserObject() == object)
+      if (childNode.getUserObject() == object) {
         return childNode;
-      else if (childNode.getChildCount() > 0)
-      {
+      } else if (childNode.getChildCount() > 0) {
         grandChild = this.searchChildrenForObject(childNode, object);
         if (grandChild != null)
           return grandChild;
@@ -52,79 +124,18 @@ org.xwidgets.core.TreeModel = function(rootNode) {
   }
 };
 
-org.xwidgets.core.TreeNode = function(value, leaf, userObject) {
-  this.value = value;
-  this.leaf = leaf ? leaf : false;
-  this.userObject = userObject ? userObject : null;
-  this.children = new Array();
-  this.parent = null;
-  this.expanded = false;
-  this.model = null;
-  
-  var p = org.xwidgets.core.TreeNode.prototype;
+org.xwidgets.core.TreeModel.parse = function(model) {
+  return new org.xwidgets.core.TreeModel(org.xwidgets.core.TreeModel.parseNode(model));
+};
 
-  p.getUserObject = function() {
-    return this.userObject;
-  }
-
-  p.setUserObject = function(obj) {
-    this.userObject = obj;
-  }
-
-  p.setModel = function(model) {
-    this.model = model;
-  }
-
-  p.add = function(node) {
-    node.parent = this;
-    this.children.push(node);
-    node.setModel(this.model);
-  }
-
-  p.children = function() {
-    return this.children;
-  }
-
-  p.getChildAt = function(index) {
-    return this.children[index];
-  }
-
-  p.getChildCount = function() {
-    return this.children.length;
-  }
-
-  p.getIndex = function(node) {
-    for (var i = 0; i < this.children.length; i++)
-    {
-      if (this.children[i] == node)
-        return i;
-    }
-    return -1;
-  }
-
-  p.getParent = function() {
-    return this.parent;
-  }
-
-  p.isLeaf = function() {
-    return this.leaf;
-  }
-
-  p.remove = function(node) {
-    var found = false;
-    for (var i = 0; i < this.children.length; i++)
-    {
-      if (this.children[i] == node)
-        found = true;
-      if (found && i < this.children.length - 1)
-        this.children[i] = this.children[i + 1];
-    }
-    if (found)
-    {
-      this.children.length = this.children.length - 1;
-      this.model.tree.renderer.removeNode(node);
+org.xwidgets.core.TreeModel.parseNode = function(nodeObject) {
+  var node = new org.xwidgets.core.TreeNode(nodeObject.value, nodeObject.leafNode, nodeObject.userObject);
+  if (xw.Sys.isDefined(nodeObject.children)) {
+    for (var i = 0; i < nodeObject.children.length; i++) {
+      node.add(org.xwidgets.core.TreeModel.parseNode(nodeObject.children[i]));
     }
   }
+  return node;
 };
 
 org.xwidgets.core.TreeUtil = {
@@ -187,7 +198,7 @@ org.xwidgets.core.TreeUtil = {
     }
 
     if (u.fades.length > 0) {
-      setTimeout("xw.controls.Tree.util.processFades()", 50);
+      setTimeout("org.xwidgets.core.TreeUtil.processFades()", 50);
     } else {
       u.fading = false;
     }
@@ -212,22 +223,23 @@ org.xwidgets.core.TreeUtil = {
 
 org.xwidgets.core.Tree = function() {
   xw.Visual.call(this);
-  this._className = "org.xwidgets.core.Tree"; 
-  this.container = null;
+  this._className = "org.xwidgets.core.Tree";
+
   this.rootVisible = false;  
   this.model = null;
   this.renderer = new org.xwidgets.core.DefaultTreeRenderer();
   this.onSelect = null;
   this.onDragDrop = null;
   this.selectedNode = null;
-  
-  this.mouseDownNode = null;
-  this.draggedNode = null;
-  this.mouseDownStartPos = null;
-  this.dragThreshold = 5;
-  this.dragDiv = null;
-  this.targetNode = null;
 };
+
+// Global tree variables
+org.xwidgets.core.Tree.mouseDownNode = null;
+org.xwidgets.core.Tree.draggedNode = null;
+org.xwidgets.core.Tree.mouseDownStartPos = null;
+org.xwidgets.core.Tree.dragThreshold = 5;
+org.xwidgets.core.Tree.dragDiv = null;
+org.xwidgets.core.Tree.targetNode = null;
 
 org.xwidgets.core.Tree.prototype = new xw.Visual();
 
@@ -239,8 +251,8 @@ org.xwidgets.core.Tree.prototype.setRootVisible = function(visible) {
   this.rootVisible = visible;
 };
 
-org.xwidgets.core.Tree.prototype.render = function() {
-  this.renderer.render(this, this.container, this.model.getRoot(), true);
+org.xwidgets.core.Tree.prototype.render = function(container) {
+  this.renderer.render(this, container, this.model.getRoot(), true);
 };
 
 org.xwidgets.core.Tree.prototype.repaintNode = function(node) {
@@ -249,6 +261,11 @@ org.xwidgets.core.Tree.prototype.repaintNode = function(node) {
 
 org.xwidgets.core.Tree.prototype.getModel = function() {
   return this.model;
+};
+
+org.xwidgets.core.Tree.prototype.setModel = function(model) {
+  this.model = model;
+  this.model.setTree(this);
 };
 
 org.xwidgets.core.Tree.prototype.selectNode = function(node) {
@@ -283,83 +300,94 @@ org.xwidgets.core.Tree.prototype.moveNode = function(sourceNode, targetNode) {
   }
 };
 
-org.xwidgets.core.Tree.prototype.onMouseDown = function(event, node) {
-  this.mouseDownStartPos = xw.controls.Tree.util.getMousePos(event);
-  this.mouseDownNode = node;
-  xw.Sys.chainEvent(document, "mousemove", this.onMouseMove);
-  xw.Sys.chainEvent(document, "mouseup", this.onMouseUp);
-  event.stopPropagation();
+// Global tree methods
+
+org.xwidgets.core.Tree.onMouseDown = function(event, node) {
+  org.xwidgets.core.Tree.mouseDownStartPos = org.xwidgets.core.TreeUtil.getMousePos(event);
+  org.xwidgets.core.Tree.mouseDownNode = node;
+  
+  xw.Sys.chainEvent(document, "mousemove", org.xwidgets.core.Tree.onMouseMove);
+  xw.Sys.chainEvent(document, "mouseup", org.xwidgets.core.Tree.onMouseUp);
+
+//  event.stopPropagation();
+  // Prevent the default behaviour (of selecting text)
+  xw.Sys.cancelEventBubble(event);
 };
 
-org.xwidgets.core.Tree.prototype.onMouseMove = function(event) {
-  if (this.draggedNode == null) {
-    var distance = org.xwidgets.core.TreeUtil.calcDistance(org.xwidgets.core.TreeUtil.getMousePos(event), this.mouseDownStartPos);
-    if (distance > this.dragThreshold)
+org.xwidgets.core.Tree.onMouseMove = function(event) {
+  var t = org.xwidgets.core.Tree;
+  var u = org.xwidgets.core.TreeUtil;
+  if (t.draggedNode == null) {
+    var distance = u.calcDistance(u.getMousePos(event), t.mouseDownStartPos);
+    if (distance > t.dragThreshold)
     {
-      this.draggedNode = this.mouseDownNode;
-      if (this.dragDiv == null)
+      t.draggedNode = t.mouseDownNode;
+      if (t.dragDiv == null)
       {
-        this.targetNode = null;
-        this.dragDiv = document.createElement("div");
-        this.dragDiv.style.position = "absolute";
-        this.util.setOpacity(this.dragDiv, 40);
-        window.document.body.appendChild(this.dragDiv);
+        t.targetNode = null;
+        t.dragDiv = document.createElement("div");
+        t.dragDiv.style.position = "absolute";
+        u.setOpacity(t.dragDiv, 40);
+        window.document.body.appendChild(t.dragDiv);
       }
 
-      this.draggedNode.renderer.renderClone(this.dragDiv, this.draggedNode);
-      this.dragDiv.style.display = "";
-      var pos = xw.controls.Tree.util.getMousePos(event);
-      this.dragDiv.style.left = (pos.x + 10) + "px";
-      this.dragDiv.style.top = pos.y + "px";
+      t.draggedNode.renderer.renderClone(t.dragDiv, t.draggedNode);
+      t.dragDiv.style.display = "";
+      var pos = u.getMousePos(event);
+      t.dragDiv.style.left = (pos.x + 10) + "px";
+      t.dragDiv.style.top = pos.y + "px";
     }
   }
   else
   {
-    var pos = xw.controls.Tree.util.getMousePos(event);
-    this.dragDiv.style.left = (pos.x + 10) + "px";
-    this.dragDiv.style.top = pos.y + "px";
+    var pos = u.getMousePos(event);
+    t.dragDiv.style.left = (pos.x + 10) + "px";
+    t.dragDiv.style.top = pos.y + "px";
   }
 };
 
-org.xwidgets.core.Tree.prototype.onMouseUp = function(event) {
-  xw.Sys.unchainEvent(document, "mousemove", this.onMouseMove);
-  xw.Sys.unchainEvent(document, "mouseup", this.onMouseUp);
+org.xwidgets.core.Tree.onMouseUp = function(event) {
+  var t = org.xwidgets.core.Tree;
+  xw.Sys.unchainEvent(document, "mousemove", t.onMouseMove);
+  xw.Sys.unchainEvent(document, "mouseup", t.onMouseUp);
+  
+  t.mouseDownStartPos = null;
 
-  this.mouseDownStartPos = null;
-
-  if (this.dragDiv) {
-    this.dragDiv.style.display = "none";
+  if (t.dragDiv) {
+    t.dragDiv.style.display = "none";
   }
 
-  if (this.targetNode) {
-    this.renderer.renderSelected(this.targetNode, false);
-    this.draggedNode.model.tree.initiateDragDrop(this.draggedNode, this.targetNode);
-  } else if (this.mouseDownNode.model && this.mouseDownNode.model.tree && !this.draggedNode) {
-    this.mouseDownNode.model.tree.selectNode(this.mouseDownNode);
+  if (t.targetNode) {
+    t.targetNode.renderer.renderSelected(t.targetNode, false);
+    t.draggedNode.model.tree.initiateDragDrop(t.draggedNode, t.targetNode);
+  } else if (t.mouseDownNode.model && t.mouseDownNode.model.tree && !t.draggedNode) {
+    t.mouseDownNode.model.tree.selectNode(t.mouseDownNode);
   }
 
-  this.targetNode = null;
-  this.draggedNode = null;
+  t.targetNode = null;
+  t.draggedNode = null;
 
-  event.stopPropagation();
+  // Prevent the default behaviour (of selecting text)
+  xw.Sys.cancelEventBubble(event);
 };
 
-org.xwidgets.core.Tree.prototype.onMouseOver = function(event, node) {
-  if (this.draggedNode && this.draggedNode != node && !node.isLeaf() && this.draggedNode.getParent() != node) {
+org.xwidgets.core.Tree.onMouseOver = function(event, node) {
+  var t = org.xwidgets.core.Tree;
+  if (t.draggedNode && t.draggedNode != node && !node.isLeaf() && t.draggedNode.getParent() != node) {
     node.renderer.renderSelected(node, true);
-    this.targetNode = node;
+    t.targetNode = node;
   }
 };
 
-org.xwidgets.core.Tree.prototype.onMouseOut = function(event, node) {
-  if (this.draggedNode && this.draggedNode != node && !node.isLeaf()) {
+org.xwidgets.core.Tree.onMouseOut = function(event, node) {
+  var t = org.xwidgets.core.Tree;
+  if (t.draggedNode && t.draggedNode != node && !node.isLeaf()) {
     node.renderer.renderSelected(node, false);
-    if (this.targetNode == node) {
-      this.targetNode = null;
+    if (t.targetNode == node) {
+      t.targetNode = null;
     }
   }
 };
-
 
 org.xwidgets.core.DefaultTreeRenderer = function() {
   this.plusStartClass = "treePlusStart";
@@ -385,7 +413,7 @@ org.xwidgets.core.DefaultTreeRenderer = function() {
 
 org.xwidgets.core.DefaultTreeRenderer.prototype.removeNode = function(node) {
   node.parent.childrenCell.removeChild(node.tableCtl);
-}
+};
 
 org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(tree, container, node, renderChildren) {
   if (!node.tableCtl) {
@@ -418,6 +446,7 @@ org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(tree, containe
     node.iconDiv.style.position = "static";
 
     node.iconCell.style.width = "1px";
+    node.iconCell.style.cursor = "pointer";
     node.iconCell.appendChild(node.iconDiv);
 
     node.content = document.createElement("span");
@@ -435,42 +464,42 @@ org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(tree, containe
 
     node.childrenCell = node.childrenRow.insertCell(-1);
     node.childrenCell.colSpan = 2;
+    
+    var t = org.xwidgets.core.Tree;
 
-    var mouseDownFunction = function(event) { tree.onMouseDown(event, node); };
+    var mouseDownFunction = function(event) { t.onMouseDown(event, node); };
     xw.Sys.chainEvent(node.iconDiv, "mousedown", mouseDownFunction);
     xw.Sys.chainEvent(node.contentCell, "mousedown", mouseDownFunction);
 
-    var mouseOverFunction = function(event) { tree.onMouseOver(event, node); };
+    var mouseOverFunction = function(event) { t.onMouseOver(event, node); };
     xw.Sys.chainEvent(node.iconDiv, "mouseover", mouseOverFunction);
     xw.Sys.chainEvent(node.contentCell, "mouseover", mouseOverFunction);
 
-    var mouseOutFunction = function(event) { tree.onMouseOut(event, node); };
+    var mouseOutFunction = function(event) { t.onMouseOut(event, node); };
     xw.Sys.chainEvent(node.iconDiv, "mouseout", mouseOutFunction);
     xw.Sys.chainEvent(node.contentCell, "mouseout", mouseOutFunction);
   }
 
   node.contentText.nodeValue = node.value;
 
-  if (container)
-  {
+  if (container) {
     var inContainer = false;
-    for (var i = 0; i < container.childNodes.length; i++)
-    {
-      if (container.childNodes[i] == node.tableCtl)
-      {
+    for (var i = 0; i < container.childNodes.length; i++) {
+      if (container.childNodes[i] == node.tableCtl) {
         inContainer = true;
         break;
       }
     }
 
-    if (!inContainer)
+    if (!inContainer) {
       container.appendChild(node.tableCtl);
+    }
   }
 
-  if (!node.isLeaf() && renderChildren)
-  {
-    for (var i = 0; i < node.getChildCount(); i++)
-      this.render(node.childrenCell, node.getChildAt(i), true);
+  if (!node.isLeaf() && renderChildren) {
+    for (var i = 0; i < node.getChildCount(); i++) {
+      this.render(tree, node.childrenCell, node.getChildAt(i), true);
+    }
   }
 
   // Reset the child branch div height
@@ -479,74 +508,64 @@ org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(tree, containe
   var expanded = node.expanded && (node.getChildCount() > 0);
 //    node.childrenRow.style.display = expanded ? "" : "none";
 
-  if (node.isLeaf())
-  {
-    if (node.getParent() == null)
+  if (node.isLeaf()) {
+    if (node.getParent() == null) {
       node.branchDiv.className = this.lineBranchClass;
-    else if (node.getParent().getIndex(node) == node.getParent().getChildCount() - 1)
+    } else if (node.getParent().getIndex(node) == node.getParent().getChildCount() - 1) {
       node.branchDiv.className = this.lineEndClass;
-    else
+    } else {
       node.branchDiv.className = this.lineBranchClass;
+    }
 
     node.iconDiv.className = this.leafClass;
-  }
-  else
-  {
-    if (node.getParent() == null)
-    {
-      if (node.getChildCount() > 0)
+  } else {
+    if (node.getParent() == null) {
+      if (node.getChildCount() > 0) {
         node.branchDiv.className = expanded ? this.minusNoneClass : this.plusNoneClass;
-      else
+      } else {
         node.branchDiv.className = "";
-    }
-    else if (node.getParent().getIndex(node) == node.getParent().getChildCount() - 1)
-    {
-      if (node.getChildCount() > 0)
-      {
+      }
+    } else if (node.getParent().getIndex(node) == node.getParent().getChildCount() - 1) {
+      if (node.getChildCount() > 0) {
         node.branchDiv.className = expanded ? this.minusEndClass : this.plusEndClass;
         node.childBranchDiv.className = "";
         node.childBranchDiv.style.width = "100%";
-      }
-      else
+      } else {
         node.branchDiv.className = this.lineEndClass;
-    }
-    else
-    {
-      if (node.getChildCount() > 0)
-      {
+      }
+    } else {
+      if (node.getChildCount() > 0) {
         node.childBranchDiv.className = this.lineMiddleClass;
         node.childBranchDiv.style.height = node.childBranchCell.offsetHeight + "px";
-
         node.branchDiv.className = expanded ? this.minusMiddleClass : this.plusMiddleClass;
-      }
-      else
+      } else {
         node.branchDiv.className = this.lineBranchClass;
+      }
     }
     node.iconDiv.className = expanded ? this.folderOpenClass : this.folderClosedClass;
   }
 
-  if (node.getParent())
-    node.renderer.render(null, node.getParent());
+  if (node.getParent()) {
+    node.renderer.render(tree, null, node.getParent());
+  }
 
-  if (this.onRender)
+  if (this.onRender) {
     this.onRender(node);
+  }
 
   node.childrenRow.style.display = expanded ? "" : "none";
 };
 
-org.xwidgets.controls.DefaultTreeRenderer.prototype.toggle = function(node) {
-  if (node.expanded)
-  {
+org.xwidgets.core.DefaultTreeRenderer.prototype.toggle = function(node) {
+  if (node.expanded) {
     // Reset the child branch div height
     node.childrenRow.style.display = "";
-    xw.controls.Tree.util.fadeIn(node.childrenCell, 25);
+    org.xwidgets.core.TreeUtil.fadeIn(node.childrenCell, 25);
     this.decorateNode(node, true);
-  }
-  else
-  {
+  } else {
     this.decorateNode(node, false);
     var onComplete = function() { node.childrenRow.style.display = "none"; node.renderer.decorateNode(node, true); };
-    xw.controls.Tree.util.fadeOut(node.childrenCell, 34, onComplete);
+    org.xwidgets.core.TreeUtil.fadeOut(node.childrenCell, 34, onComplete);
   }
 };
 

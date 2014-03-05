@@ -46,7 +46,7 @@ xw.Sys.getObject = function(id) {
   } else if (document.layers && document.layers[id]) {
     return document.layers[id];
   } else {
-    return false;
+    return null;
   }
 };
 
@@ -211,6 +211,19 @@ xw.Sys.unchainEvent = function(ctl, eventName, eventFunc) {
     ctl.removeEventListener(eventName, eventFunc, true);
   } else {
     alert("Your browser doesn't support removing event listeners");
+  }
+};
+
+xw.Sys.cancelEventBubble = function(event) {
+  if (navigator.userAgent.indexOf("MSIE") != -1) {
+    window.event.cancelBubble = true;
+    window.event.returnValue = false;
+  } else {
+    event.preventDefault();
+  }
+  
+  if (event.stopPropagation) {
+    event.stopPropagation();
   }
 };
 
@@ -989,6 +1002,11 @@ xw.Controller.openView = function(viewName, definition, params, c) {
   // Determine the container control 
   var container = ("string" === (typeof c)) ? xw.Sys.getObject(c) : c;
   
+  if (container == null) {
+    alert("Error opening view - container [" + c + "] not found.");
+    return;
+  } 
+
   // If the container already contains a view, destroy it
   for (var i = 0; i < xw.Controller.activeViews.length; i++) {
     var entry = xw.Controller.activeViews[i];
