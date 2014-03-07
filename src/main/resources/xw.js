@@ -326,7 +326,13 @@ xw.Sys.setObjectProperty = function(obj, property, value) {
       }
     }
   } else {
-    value = xw.EL.interpolate(obj, value);
+    // If the value is an exact EL expression then we evaluate it
+    if (value.match(xw.EL.regex()) == value) {
+      value = xw.EL.eval(obj, value);
+    } else {
+      // Otherwise we interpolate it
+      value = xw.EL.interpolate(obj, value);
+    }
   }
   
   if (xw.Sys.isDefined(obj, setterName) && typeof obj[setterName] === "function") {
