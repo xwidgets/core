@@ -118,6 +118,16 @@ xw.Sys.getBasePath = function() {
     }
   }
   
+  // Create an EL binding for the basePath
+  xw.EL.registerResolver({
+    canResolve: function(expr) {
+      return "basePath" == expr;
+    },
+    resolve: function(expr) {
+      return "basePath" == expr ? xw.Sys.basePath : undefined;
+    }
+  });
+  
   return xw.Sys.basePath;
 };
 
@@ -315,6 +325,8 @@ xw.Sys.setObjectProperty = function(obj, property, value) {
          value = "true" === value;
       }
     }
+  } else {
+    value = xw.EL.interpolate(obj, value);
   }
   
   if (xw.Sys.isDefined(obj, setterName) && typeof obj[setterName] === "function") {
@@ -475,6 +487,18 @@ xw.EL.isExpression = function(expr) {
 
 xw.EL.registerResolver = function(resolver) {
   xw.EL.resolvers.push(resolver);
+};
+
+// A helper method that creates a single-value resolver
+xw.EL.setValue = function(expr, value) {
+  xw.EL.registerResolver({
+    canResolve: function(p1) {
+      return expr == p1;
+    },
+    resolve: function(p1) {
+      return expr == p1 ? value : undefined;
+    }
+  });
 };
 
 xw.EL.unregisterResolver = function(resolver) {
@@ -648,7 +672,68 @@ xw.Event.fire = function(event, params) {
       xw.Event.observers[event][i].fire(params);
     }
   }
-}
+};
+
+//
+// Ajax support
+//
+
+xw.Ajax = {
+  createRequestObject: function(callback, xml) {
+    var r;
+    if (window.XMLHttpRequest) {
+      r = new XMLHttpRequest();
+    } else {
+      r = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    r.onreadystatechange = function() {
+      if (r.readyState == 4) {
+        if (r.status == 200) {
+          // Done to avoid a memory leak
+          window.setTimeout(function() {
+            r.onreadystatechange = function() {};
+          }, 0);
+          if (callback) {
+            if (xml) {
+              try {
+                r.responseXML.documentElement;
+                callback(r.responseXML);
+              } catch (ex) {
+                try {
+                  var doc = new ActiveXObject("Microsoft.XMLDOM");
+                  doc.async = "false";
+                  doc.loadXML(r.responseText);
+                  callback(doc);
+                } catch (e) {
+                  var p = new DOMParser();
+                  callback(parser.parseFromString(r.responseText, "text/xml"));
+                }
+              }
+            } else {
+              callback(r.responseText);
+            }
+          }
+        }
+      }
+    }
+    return r;
+  },
+  get: function(path, callback) {
+    var r = xw.Ajax.createRequestObject(callback);
+    r.open("GET", path, true);
+    r.send();
+  },
+  getXml: function(path, callback) {
+    var r = xw.Ajax.createRequestObject(callback, true);
+    r.open("GET", path, true);
+    r.send();
+  },
+  postXml: function(path, content, callback) {
+    var r = xw.Ajax.createRequestObject(callback, true);
+    r.open("POST", path, true);
+    r.send(content);
+  }
+};
 
 //
 // A Map implementation
