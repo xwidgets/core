@@ -1,5 +1,5 @@
 widget("org.xwidgets.core.RestEndpoint", xw.NonVisual, {
-  create: function() {
+  _constructor: function() {
     this.registerProperty("url", "");
     this.registerProperty("method", "GET");
     this.registerProperty("callback");

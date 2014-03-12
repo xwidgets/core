@@ -1,5 +1,5 @@
 widget("org.xwidgets.core.RestELBinding", xw.NonVisual, {
-  create: function() {
+  _constructor: function() {
     this.registerProperty("binding");
     this.registerProperty("restEndpoint");
     this.registerProperty("mode", "JSON"); 

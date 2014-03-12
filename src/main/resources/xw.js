@@ -10,8 +10,8 @@ function widget(fullName, superClass, methods) {
         if (typeof superClass == "function") {
           superClass.call();
         }
-        if (typeof this.create == "function") {
-          this.create(); 
+        if (typeof this._constructor == "function") {
+          this._constructor(); 
         }
       };
       if (superClass) {
