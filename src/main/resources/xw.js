@@ -1,3 +1,37 @@
+function widget(fullName, superClass, methods) {
+  var i;
+  var pkg = window;
+  var parts = fullName.split(".");
+  for (i = 0; i < parts.length; i++) {
+    if (i == (parts.length - 1)) {
+      var className = parts[i];
+      var f = function() { 
+        this._className = fullName;
+        if (typeof superClass == "function") {
+          superClass.call();
+        }
+        if (typeof this.create == "function") {
+          this.create(); 
+        }
+      };
+      if (superClass) {
+        f.prototype = new superClass();
+      }
+      
+      for (m in methods) {
+        f.prototype[m] = methods[m];
+      }      
+           
+      pkg[className] = f;
+    } else {
+      if (typeof pkg[parts[i]] === "undefined") {
+        pkg[parts[i]] = {};
+      }
+      pkg = pkg[parts[i]];
+    }
+  }
+};
+
 function package(fullName) {
   var i;
   var pkg = window;
@@ -325,14 +359,6 @@ xw.Sys.setObjectProperty = function(obj, property, value) {
          value = "true" === value;
       }
     }
-  } else {
-    // If the value is an exact EL expression then we evaluate it
-    if (value.match(xw.EL.regex()) == value) {
-      value = xw.EL.eval(obj, value);
-    } else {
-      // Otherwise we interpolate it
-      value = xw.EL.interpolate(obj, value);
-    }
   }
   
   if (xw.Sys.isDefined(obj, setterName) && typeof obj[setterName] === "function") {
@@ -488,7 +514,23 @@ xw.EL.regex = function(expr) {
 };
 
 xw.EL.isExpression = function(expr) {
-  return xw.EL.regex().test(expr);
+  return (typeof expr == "string") && xw.EL.regex().test(expr);
+};
+
+xw.EL.isValueExpression = function(expr) {
+  if (xw.EL.isExpression(expr)) {
+    var m = expr.match(xw.EL.regex());
+    return m.length == 1 && m[0] == expr;
+  }
+  return false;
+};
+
+xw.EL.isInterpolatedExpression = function(expr) { 
+  if (xw.EL.isExpression(expr)) {
+    var m = expr.match(xw.EL.regex());
+    return m.length >= 1 && m[0] != expr;
+  }
+  return false;
 };
 
 xw.EL.registerResolver = function(resolver) {
@@ -532,8 +574,22 @@ xw.EL.destroyViewBindings = function(view) {
 xw.EL.notify = function(rootName) {
   for (var i = 0; i < xw.EL.bindings.length; i++) { 
     var binding = xw.EL.bindings[i];
-    if (xw.EL.rootName(binding.expression) == rootName) {    
+    var match = false;
+    
+    if (binding.interpolated) {
+      for (var j = 0; j < binding.expressions.length; j++) {
+        if (xw.EL.rootName(binding.expressions[j]) == rootName) {
+          binding.value = xw.EL.interpolate(binding.widget, binding.expression);
+          match = true;
+          break;
+        }
+      }
+    } else if (xw.EL.rootName(binding.expression) == rootName) {    
       binding.value = xw.EL.eval(binding.widget, binding.expression);
+      match = true;
+    }
+    
+    if (match) {
       if (binding.propertyName) {
         xw.Sys.setObjectProperty(binding.widget, binding.propertyName, binding.value);    
       } else if (binding.callback) {
@@ -543,12 +599,33 @@ xw.EL.notify = function(rootName) {
   }
 };
 
+// Creates a new EL binding for a widget, to notify that widget when the EL value changes
+// Params:
+//   widget - the widget to bind to (must not be null)
+//   receiver - either a property name of the widget, or a callback function
+//   expr - the EL expression, either a single value binding expression (e.g. "#{foo}")
+//          or an interpolated expression (e.g. "#{foo}/#{bar}")
 xw.EL.createBinding = function(widget, receiver, expr) {
-  var binding = (typeof receiver == "string") ?
-    {widget: widget, propertyName: receiver, expression: expr} :
-    {widget: widget, callback: receiver, expression: expr};
+  var binding = {widget: widget,expression: expr};
+  binding.interpolated = xw.EL.isInterpolatedExpression(expr);
+ 
+  if (typeof receiver == "string") {
+    binding.propertyName = receiver;
+  } else {
+    binding.callback = receiver;
+  }
+  
+  if (binding.interpolated) {
+    binding.expressions = expr.match(xw.EL.regex());  
+  }
+  
   xw.EL.bindings.push(binding);
-  return xw.EL.eval(widget, expr);
+  
+  if (binding.interpolated) {
+    return xw.EL.interpolate(widget, expr);
+  } else {
+    return xw.EL.eval(widget, expr);
+  }
 };
 
 xw.EL.clearWidgetBindings = function(widget) {
@@ -1195,7 +1272,9 @@ xw.Controller.openDataModule = function(dataModule, definition, params) {
   var dm = new xw.DataModule(dataModule, params);
   xw.Controller.parseChildren(dm, definition.children, dm);
   xw.Controller.activeDataModules.push(dm);
-  dm.open();
+  if (typeof dm.open == "function") {
+    dm.open();
+  }
 };
 
 //
@@ -1215,8 +1294,8 @@ xw.Controller.parseChildren = function(owner, childNodes, parentWidget) {
       widget.setOwner(owner);      
       
       // Set the widget's attributes
-      for (var p in c.attributes) { 
-        xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+      for (var p in c.attributes) {       
+          xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
       }
       
       widgets.push(widget);
@@ -1248,7 +1327,9 @@ xw.Controller.parseChildren = function(owner, childNodes, parentWidget) {
       
       // Set the widget's attributes
       for (var p in c.attributes) { 
-        xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+        if (xw.EL.isExpression(c.attributes[p])) {
+          xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+        }
       }
             
       widgets.push(widget);
@@ -1597,6 +1678,16 @@ xw.Widget.prototype.registerProperty = function(propertyName, defaultValue) {
   }
 };
 
+xw.Widget.prototype.bindProperty = function(receiver, value) {
+  xw.EL.clearWidgetBindings(this);
+  if (xw.EL.isExpression(value)) {
+    xw.EL.createBinding(this, receiver, value);
+    return true;
+  } else {
+    return false;
+  }
+};
+
 xw.Widget.prototype.addEvent = function(control, eventName, event) {     
   if (xw.Sys.isDefined(this["on" + eventName]) && xw.Sys.isDefined(event)) {        
     var sender = this;
@@ -1605,7 +1696,7 @@ xw.Widget.prototype.addEvent = function(control, eventName, event) {
     };
     xw.Sys.chainEvent(control, eventName, action);
   }
-}
+};
 
 xw.Widget.prototype.registerEvent = function(eventName) {
   if (!xw.Sys.arrayContains(this._registeredEvents, eventName)) {
@@ -1663,8 +1754,10 @@ xw.Visual.prototype.renderChildren = function(container) {
       } else {
         this.children[i].render(container);       
       }
-    } else if (this.children[i] instanceof xw.NonVisual) {      
-      this.children[i].open();
+    } else if (this.children[i] instanceof xw.NonVisual) {     
+      if (typeof this.children[i].open == "function") {
+        this.children[i].open();
+      }
     } else {
       throw "Error - unrecognized widget type [" + this.children[i] + "] encountered in view definition";
     }
@@ -1682,8 +1775,10 @@ xw.NonVisual.prototype.openChildren = function(container) {
   for (i = 0; i < this.children.length; i++) {
     if (this.children[i] instanceof xw.Visual) {  
       throw "Error - widget extending xw.Visual may not be a child of a widget extending xw.NonVisual";
-    } else if (this.children[i] instanceof xw.NonVisual) {      
-      this.children[i].open();
+    } else if (this.children[i] instanceof xw.NonVisual) {   
+      if (typeof this.children[i].open == "function") {   
+        this.children[i].open();
+      }
     } else {
       throw "Error - unrecognized widget type [" + this.children[i] + "] encountered in view definition";
     }
@@ -1733,6 +1828,7 @@ xw.Text = function() {
   this.registerProperty("value", "");
   this.registerProperty("escape", true);
   this.control = null;  
+  this.renderedText = "";
 };
 
 xw.Text.prototype = new xw.Visual();
@@ -1745,42 +1841,32 @@ xw.Text.prototype.render = function(container) {
 
 xw.Text.prototype.renderText = function() {
   if (this.control !== null) {
-    if (xw.Sys.isDefined(this.value) && this.value !== null) {
-      var expressions = this.value.match(xw.EL.regex());
-      var renderedText;
+    var text = (xw.Sys.isDefined(this.renderedText) && this.renderedText !== null) ?
+       this.renderedText : "";
       
-      if (expressions === null) {
-        renderedText = this.value;      
-      } else {
-        renderedText = xw.EL.interpolate(this, this.value);
-      }
-      
-      if (this.escape) {
-        this.control.innerHTML = renderedText;
-      } else {
+    if (this.escape) {
+      this.control.innerHTML = text;
+    } else {
+      if (!xw.Sys.isDefined(this.textNode)) {        
         this.textNode = document.createTextNode();
         this.control.appendChild(this.textNode);
-        this.textNode.nodeValue = renderedText;
       }
+      this.textNode.nodeValue = text;
     }
   }
 };
 
 xw.Text.prototype.setValue = function(value) {
+  var that = this;
+  var cb = function(val) {
+    that.renderedText = val;
+    that.renderText();
+  };
+  if (!this.bindProperty(cb, value)) {
+    this.renderedText = value;
+    this.renderText();
+  }
   this.value = value;
-  
-  xw.EL.clearWidgetBindings(this);
-  
-  var expressions = value.match(xw.EL.regex());
-  if (expressions != null) {
-    for (var i = 0; i < expressions.length; i++) {
-      var that = this;
-      var cb = function() { that.renderText(); };    
-      xw.EL.createBinding(this, cb, expressions[i]);  
-    }
-  }  
-
-  this.renderText();
 };
 
 xw.Text.prototype.toString = function() {
