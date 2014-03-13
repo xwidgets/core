@@ -45,7 +45,6 @@ if (!Object.prototype.unwatch) {
   });
 };
 
-// This function is redundant, it can be removed after all core components have been updated.
 function package(fullName) {
   var i;
   var pkg = window;
@@ -56,7 +55,7 @@ function package(fullName) {
     }
     pkg = pkg[parts[i]];
   }
-}
+};
 
 // XWidgets namespace
 var xw = {
@@ -80,307 +79,285 @@ var xw = {
 //
 // System Utils
 //
-xw.Sys = {};
-
-xw.Sys.getObject = function(id) {
-  if (document.getElementById && document.getElementById(id)) {
-    return document.getElementById(id);
-  } else if (document.all && document.all(id)) {
-    return document.all(id);
-  } else if (document.layers && document.layers[id]) {
-    return document.layers[id];
-  } else {
-    return null;
-  }
-};
-
-xw.Sys.createHttpRequest = function(mimeType) {
-  if (window.XMLHttpRequest) {
-    var req = new XMLHttpRequest();
-    if (mimeType !== null && req.overrideMimeType) {
-      req.overrideMimeType(mimeType);
+xw.Sys = {
+  getObject: function(id) {
+    if (document.getElementById && document.getElementById(id)) {
+      return document.getElementById(id);
+    } else if (document.all && document.all(id)) {
+      return document.all(id);
+    } else if (document.layers && document.layers[id]) {
+      return document.layers[id];
+    } else {
+      return null;
     }
-    return req;
-  }
-  else {
-    return new ActiveXObject("Microsoft.XMLHTTP");
-  }
-};
-
-//
-// Asynchronously loads the javascript source from the specified url
-//   callback - the callback function to invoke if successful
-//   failCallback = the callback function to invoke if loading failed
-//
-xw.Sys.loadSource = function(url, callback, failCallback) {
-  var req = xw.Sys.createHttpRequest("text/plain");
-  req.onreadystatechange = function() {
-    if (req.readyState === 4) {
-      if (req.status === 200 || req.status === 0) {
-        var e = document.createElement("script");
-        e.language = "javascript";
-        e.text = req.responseText;
-        e.type = "text/javascript";
-        var head = document.getElementsByTagName("head")[0];
-        if (head === null) {
-          head = document.createElement("head");
-          var html = document.getElementsByTagName("html")[0];
-          html.insertBefore(head, html.firstChild);
-        }
-        try {
-          head.appendChild(e);           
-        } catch (err) {
-          window.alert("There was an error loading the script from '" + url + "': " + err);
-          return;
-        }
-        if (callback) {
-          callback(url);
-        }               
-      } else if (req.status === 404) {
-        window.alert("404 error: the requested resource '" + url + "' could not be found.");
-        if (failCallback) {
-          failCallback();
-        }
+  },
+  createHttpRequest: function(mimeType) {
+    if (window.XMLHttpRequest) {
+      var req = new XMLHttpRequest();
+      if (mimeType !== null && req.overrideMimeType) {
+        req.overrideMimeType(mimeType);
       }
-    }
-  };
-
-  req.open("GET", url, true);
-  req.send(null);
-};
-
-xw.Sys.basePath = null;
-xw.Sys.getBasePath = function() {
-  if (xw.Sys.basePath === null) {
-    var scripts = document.getElementsByTagName('script');
-    for (var i = 0; i < scripts.length; i++) {
-      var match = scripts[i].src.match( /(^|.*[\\\/])xw.js(?:\?.*)?$/i );
-      if (match) {
-        xw.Sys.basePath = match[1];
-        break;
-      }
-    }
-  }
-  
-  // Create an EL binding for the basePath
-  xw.EL.registerResolver({
-    canResolve: function(expr) {
-      return "basePath" == expr;
-    },
-    resolve: function(expr) {
-      return "basePath" == expr ? xw.Sys.basePath : undefined;
-    }
-  });
-  
-  return xw.Sys.basePath;
-};
-
-xw.Sys.newInstance = function(name) {
-  var current, parts, constructorName;
-  parts = name.split('.');
-  constructorName = parts[parts.length - 1];
-  current = window;
-  for (var i = 0; i < parts.length - 1; i++) {
-    current = current[parts[i]];
-  }
-  return new current[constructorName]();
-};
-
-xw.Sys.isUndefined = function(value) {
-  return value == null && value !== null;
-};
-
-xw.Sys.isDefined = function(value) {
-  return !xw.Sys.isUndefined(value);
-};
-
-xw.Sys.classExists = function(fqcn) {
-  var parts = fqcn.split(".");
-  var partial = "";
-  var i;
-  for (i = 0; i < parts.length; i++) {
-    partial += (i > 0 ? "." : "") + parts[i];
-    if (eval("typeof " + partial) === "undefined") return false;
-  }
-  
-  return eval("typeof " + fqcn) === "function";
-};
-
-xw.Sys.cloneObject = function(o) {
-  if (o instanceof xw.Widget) return o.clone();
-  if (o == null || typeof(o) != 'object') return o;
-  var n = new o.constructor();
-  for (var key in o) {
-    n[key] = xw.Sys.cloneObject(o[key]);
-  }
-  return n;
-};
-
-xw.Sys.arrayContains = function(arrayVal, value) {
-  var i;
-  for (i = 0; i < arrayVal.length; i++) {
-    if (arrayVal[i] === value) {
-      return true;
-    }
-  }
-  return false;
-};
-
-//
-// Deletes the elements from an array that meet the specified condition
-//
-xw.Sys.deleteArrayElements = function(arr, condition) {
-  for (var i = arr.length - 1; i >= 0; i--) {
-    if (condition(arr[i])) arr.splice(i,1);
-  }
-};
-
-xw.Sys.trim = function(value) {
-  return value.replace(/^\s+|\s+$/g,"");
-};
-
-xw.Sys.capitalize = function(value) {
-  return value.substring(0, 1).toUpperCase() + value.substring(1, value.length);
-};
-
-xw.Sys.chainEvent = function(ctl, eventName, eventFunc) {
-  if (ctl.addEventListener) {
-    // normal browsers like firefox, chrome and safari support this
-    ctl.addEventListener(eventName, eventFunc, false);
-  }
-  else if (ctl.attachEvent) {
-    // irregular browsers such as IE don't support standard functions
-    ctl.attachEvent("on" + eventName, eventFunc);
-  }
-  else {
-    // really old browsers
-    alert("your browser doesn't support adding event listeners");
-  }
-};
-
-xw.Sys.unchainEvent = function(ctl, eventName, eventFunc) {
-  if (ctl.detachEvent) {
-    ctl.detachEvent("on" + eventName, eventFunc);
-  } else if (ctl.removeEventListener) {
-    ctl.removeEventListener(eventName, eventFunc, false);
-  } else {
-    alert("Your browser doesn't support removing event listeners");
-  }
-};
-
-xw.Sys.cancelEventBubble = function(event) {
-  if (navigator.userAgent.indexOf("MSIE") != -1) {
-    window.event.cancelBubble = true;
-    window.event.returnValue = false;
-  } else {
-    event.preventDefault();
-  }
-  
-  if (event.stopPropagation) {
-    event.stopPropagation();
-  }
-};
-
-xw.Sys.endsWith = function(value, suffix) {
-  return value.indexOf(suffix, value.length - suffix.length) !== -1;
-};
-
-xw.Sys.uid = function() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-    return v.toString(16);
-  });
-};
-
-//
-// Returns the specified style for an element
-// TODO - probably need to fix this up for safari - use xw.Sys.getBorder() as an example
-//
-xw.Sys.getStyle = function(element, cssRule) {
-	var strValue = "";
-	if (document.defaultView && document.defaultView.getComputedStyle) {
-		strValue = document.defaultView.getComputedStyle(element, "").getPropertyValue(cssRule);
-	}
-	else if (element.currentStyle) {
-		cssRule = cssRule.replace(/\-(\w)/g, function (strMatch, p1){
-			return p1.toUpperCase();
-		});
-		strValue = element.currentStyle[cssRule];
-	}
-	return strValue;
-};
-
-xw.Sys.getBorder = function(control) {
-  var border = {};
-  if (window.navigator.userAgent.indexOf('Safari') === -1) {
-    if (control.currentStyle) {
-      border.top = parseInt(control.currentStyle.borderTopWidth, 10);
-      border.right = parseInt(control.currentStyle.borderRightWidth, 10);
-      border.bottom = parseInt(control.currentStyle.borderBottomWidth, 10);
-      border.left = parseInt(control.currentStyle.borderLeftWidth, 10);
+      return req;
     }
     else {
-      try {
-        border.top = parseInt(getComputedStyle(control,null).getPropertyValue('border-top-width'), 10);
-        border.right = parseInt(getComputedStyle(control,null).getPropertyValue('border-right-width'), 10);
-        border.bottom = parseInt(getComputedStyle(control,null).getPropertyValue('border-bottom-width'), 10);
-        border.left = parseInt(getComputedStyle(control,null).getPropertyValue('border-left-width'), 10);
+      return new ActiveXObject("Microsoft.XMLHTTP");
+    }
+  },
+  //
+  // Asynchronously loads the javascript source from the specified url
+  //   callback - the callback function to invoke if successful
+  //   failCallback = the callback function to invoke if loading failed
+  //
+  loadSource: function(url, callback, failCallback) {
+    var req = xw.Sys.createHttpRequest("text/plain");
+    req.onreadystatechange = function() {
+      if (req.readyState === 4) {
+        if (req.status === 200 || req.status === 0) {
+          var e = document.createElement("script");
+          e.language = "javascript";
+          e.text = req.responseText;
+          e.type = "text/javascript";
+          var head = document.getElementsByTagName("head")[0];
+          if (head === null) {
+            head = document.createElement("head");
+            var html = document.getElementsByTagName("html")[0];
+            html.insertBefore(head, html.firstChild);
+          }
+          try {
+            head.appendChild(e);           
+          } catch (err) {
+            window.alert("There was an error loading the script from '" + url + "': " + err);
+            return;
+          }
+          if (callback) {
+            callback(url);
+          }               
+        } else if (req.status === 404) {
+          window.alert("404 error: the requested resource '" + url + "' could not be found.");
+          if (failCallback) {
+            failCallback();
+          }
+        }
       }
-      // last resort
-      catch (e) {
-        border.top = parseInt(control.style.borderTopWidth, 10);
-        border.right = parseInt(control.style.borderRightWidth, 10);
-        border.bottom = parseInt(control.style.borderBottomWidth, 10);
-        border.left = parseInt(control.style.borderLeftWidth, 10);
+    };
+
+    req.open("GET", url, true);
+    req.send(null);
+  },
+  basePath: null,
+  getBasePath: function() {
+    if (xw.Sys.basePath === null) {
+      var scripts = document.getElementsByTagName('script');
+      for (var i = 0; i < scripts.length; i++) {
+        var match = scripts[i].src.match( /(^|.*[\\\/])xw.js(?:\?.*)?$/i );
+        if (match) {
+          xw.Sys.basePath = match[1];
+          break;
+        }
       }
     }
-  }
-  else {
-    border.top = parseInt(control.style.getPropertyValue('border-top-width'), 10);
-    border.right = parseInt(control.style.getPropertyValue('border-right-width'), 10);
-    border.bottom = parseInt(control.style.getPropertyValue('border-bottom-width'), 10);
-    border.left = parseInt(control.style.getPropertyValue('border-left-width'), 10);
-  }
-  return border;
-};
-
-xw.Sys.parseXml = function(body) {
-  var doc;
-  try {
-    doc = new ActiveXObject("Microsoft.XMLDOM");
-    doc.async = "false";
-    doc.loadXML(body);
-    return doc;
-  }
-  catch (e) {
-    doc = new DOMParser().parseFromString(body, "text/xml");
-    return doc;
-  }
-};
-
-xw.Sys.setObjectProperty = function(obj, property, value) {
-  // Check if the object has a setter method
-  var setterName = "set" + xw.Sys.capitalize(property);
-  
-  // Do value conversion here if necessary, but ONLY if the value isn't an EL expression
-  if (!xw.EL.isExpression(value)) {
-    if (xw.Sys.isDefined(obj[property])) {
-      if (typeof obj[property] === "boolean" && typeof value !== "boolean") {
-         value = "true" === value;
+    
+    // Create an EL binding for the basePath
+    xw.EL.registerResolver({
+      canResolve: function(expr) {
+        return "basePath" == expr;
+      },
+      resolve: function(expr) {
+        return "basePath" == expr ? xw.Sys.basePath : undefined;
+      }
+    });
+    
+    return xw.Sys.basePath;
+  },
+  newInstance: function(name) {
+    var current, parts, constructorName;
+    parts = name.split('.');
+    constructorName = parts[parts.length - 1];
+    current = window;
+    for (var i = 0; i < parts.length - 1; i++) {
+      current = current[parts[i]];
+    }
+    return new current[constructorName]();
+  },
+  isUndefined: function(value) {
+    return value == null && value !== null;
+  },
+  isDefined: function(value) {
+    return !xw.Sys.isUndefined(value);
+  },
+  classExists: function(fqcn) {
+    var parts = fqcn.split(".");
+    var partial = "";
+    var i;
+    for (i = 0; i < parts.length; i++) {
+      partial += (i > 0 ? "." : "") + parts[i];
+      if (eval("typeof " + partial) === "undefined") return false;
+    }
+    
+    return eval("typeof " + fqcn) === "function";
+  },
+  cloneObject: function(o) {
+    if (o instanceof xw.Widget) return o.clone();
+    if (o == null || typeof(o) != 'object') return o;
+    var n = new o.constructor();
+    for (var key in o) {
+      n[key] = xw.Sys.cloneObject(o[key]);
+    }
+    return n;
+  },
+  arrayContains: function(arrayVal, value) {
+    var i;
+    for (i = 0; i < arrayVal.length; i++) {
+      if (arrayVal[i] === value) {
+        return true;
       }
     }
-  }
-  
-  if (xw.Sys.isDefined(obj, setterName) && typeof obj[setterName] === "function") {
-    obj[setterName](value);
-  } else {
-    obj[property] = value;
-  }
-};
-
-xw.Sys.clearChildren = function(e) {
-  while (xw.Sys.isDefined(e) && e.hasChildNodes()) {
-    e.removeChild(e.firstChild);
+    return false;
+  },
+  //
+  // Deletes the elements from an array that meet the specified condition
+  //
+  deleteArrayElements: function(arr, condition) {
+    for (var i = arr.length - 1; i >= 0; i--) {
+      if (condition(arr[i])) arr.splice(i,1);
+    }
+  },
+  trim: function(value) {
+    return value.replace(/^\s+|\s+$/g,"");
+  },
+  capitalize: function(value) {
+    return value.substring(0, 1).toUpperCase() + value.substring(1, value.length);
+  },
+  chainEvent: function(ctl, eventName, eventFunc) {
+    if (ctl.addEventListener) {
+      // normal browsers like firefox, chrome and safari support this
+      ctl.addEventListener(eventName, eventFunc, false);
+    }
+    else if (ctl.attachEvent) {
+      // irregular browsers such as IE don't support standard functions
+      ctl.attachEvent("on" + eventName, eventFunc);
+    }
+    else {
+      // really old browsers
+      alert("your browser doesn't support adding event listeners");
+    }
+  },
+  unchainEvent: function(ctl, eventName, eventFunc) {
+    if (ctl.detachEvent) {
+      ctl.detachEvent("on" + eventName, eventFunc);
+    } else if (ctl.removeEventListener) {
+      ctl.removeEventListener(eventName, eventFunc, false);
+    } else {
+      alert("Your browser doesn't support removing event listeners");
+    }
+  },
+  cancelEventBubble: function(event) {
+    if (navigator.userAgent.indexOf("MSIE") != -1) {
+      window.event.cancelBubble = true;
+      window.event.returnValue = false;
+    } else {
+      event.preventDefault();
+    }
+    
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+  },
+  endsWith: function(value, suffix) {
+    return value.indexOf(suffix, value.length - suffix.length) !== -1;
+  },
+  uid: function() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+    });
+  },
+  //
+  // Returns the specified style for an element
+  // TODO - probably need to fix this up for safari - use xw.Sys.getBorder() as an example
+  //
+  getStyle: function(element, cssRule) {
+	  var strValue = "";
+	  if (document.defaultView && document.defaultView.getComputedStyle) {
+		  strValue = document.defaultView.getComputedStyle(element, "").getPropertyValue(cssRule);
+	  }
+	  else if (element.currentStyle) {
+		  cssRule = cssRule.replace(/\-(\w)/g, function (strMatch, p1){
+			  return p1.toUpperCase();
+		  });
+		  strValue = element.currentStyle[cssRule];
+	  }
+	  return strValue;
+  },
+  getBorder: function(control) {
+    var border = {};
+    if (window.navigator.userAgent.indexOf('Safari') === -1) {
+      if (control.currentStyle) {
+        border.top = parseInt(control.currentStyle.borderTopWidth, 10);
+        border.right = parseInt(control.currentStyle.borderRightWidth, 10);
+        border.bottom = parseInt(control.currentStyle.borderBottomWidth, 10);
+        border.left = parseInt(control.currentStyle.borderLeftWidth, 10);
+      }
+      else {
+        try {
+          border.top = parseInt(getComputedStyle(control,null).getPropertyValue('border-top-width'), 10);
+          border.right = parseInt(getComputedStyle(control,null).getPropertyValue('border-right-width'), 10);
+          border.bottom = parseInt(getComputedStyle(control,null).getPropertyValue('border-bottom-width'), 10);
+          border.left = parseInt(getComputedStyle(control,null).getPropertyValue('border-left-width'), 10);
+        }
+        // last resort
+        catch (e) {
+          border.top = parseInt(control.style.borderTopWidth, 10);
+          border.right = parseInt(control.style.borderRightWidth, 10);
+          border.bottom = parseInt(control.style.borderBottomWidth, 10);
+          border.left = parseInt(control.style.borderLeftWidth, 10);
+        }
+      }
+    }
+    else {
+      border.top = parseInt(control.style.getPropertyValue('border-top-width'), 10);
+      border.right = parseInt(control.style.getPropertyValue('border-right-width'), 10);
+      border.bottom = parseInt(control.style.getPropertyValue('border-bottom-width'), 10);
+      border.left = parseInt(control.style.getPropertyValue('border-left-width'), 10);
+    }
+    return border;
+  },
+  parseXml: function(body) {
+    var doc;
+    try {
+      doc = new ActiveXObject("Microsoft.XMLDOM");
+      doc.async = "false";
+      doc.loadXML(body);
+      return doc;
+    }
+    catch (e) {
+      doc = new DOMParser().parseFromString(body, "text/xml");
+      return doc;
+    }
+  },
+  setObjectProperty: function(obj, property, value) {
+    // Check if the object has a setter method
+    var setterName = "set" + xw.Sys.capitalize(property);
+    
+    // Do value conversion here if necessary, but ONLY if the value isn't an EL expression
+    if (!xw.EL.isExpression(value)) {
+      if (xw.Sys.isDefined(obj[property])) {
+        if (typeof obj[property] === "boolean" && typeof value !== "boolean") {
+           value = "true" === value;
+        }
+      }
+    }
+    
+    if (xw.Sys.isDefined(obj, setterName) && typeof obj[setterName] === "function") {
+      obj[setterName](value);
+    } else {
+      obj[property] = value;
+    }
+  },
+  clearChildren: function(e) {
+    while (xw.Sys.isDefined(e) && e.hasChildNodes()) {
+      e.removeChild(e.firstChild);
+    }
   }
 };
 
@@ -388,72 +365,65 @@ xw.Sys.clearChildren = function(e) {
 // Logging
 //
 
-xw.Log = {};
-xw.Log.logWindow = null;
-xw.Log.messages = new Array();
-xw.Log.scrollback = 1000;
-xw.Log.levels = {
-  DEBUG: 100,
-  INFO: 200,
-  WARN: 300,
-  ERROR: 400
-};
-
-xw.Log.logLevel = "INFO";
-
-xw.Log.append = function(text, logLevel) {
-  var msg = {
-    text : text,
-    logLevel : logLevel,
-    timestamp : new Date()
-  };
-  if (xw.Log.levels[logLevel] <= xw.Log.levels[xw.Log.logLevel]) {
-    xw.Log.messages.push(msg);
-    while (xw.Log.messages.length > xw.Log.scrollback) {
-      xw.Log.messages.splice(0,1);
+xw.Log = {
+  logWindow: null,
+  messages: [],
+  scrollback: 1000,
+  levels: {
+    DEBUG: 100,
+    INFO: 200,
+    WARN: 300,
+    ERROR: 400
+  },
+  logLevel: "INFO",
+  append: function(text, logLevel) {
+    var msg = {
+      text : text,
+      logLevel : logLevel,
+      timestamp : new Date()
+    };
+    if (xw.Log.levels[logLevel] <= xw.Log.levels[xw.Log.logLevel]) {
+      xw.Log.messages.push(msg);
+      while (xw.Log.messages.length > xw.Log.scrollback) {
+        xw.Log.messages.splice(0,1);
+      }
+      xw.Log.appendToWindow(msg); 
     }
-    xw.Log.appendToWindow(msg); 
-  }
-};
-
-xw.Log.debug = function(text) {
-  xw.Log.append(text, "DEBUG");
-};
-
-xw.Log.info = function(text) {
-  xw.Log.append(text, "INFO");
-};
-
-xw.Log.warn = function(text) {
-  xw.Log.append(text, "WARN");
-};
-
-xw.Log.error = function(text) {
-  xw.Log.append(text, "ERROR");
-};
-
-xw.Log.appendToWindow = function(msg) {
-  if (xw.Log.logWindow) {
-    var formattedTime = msg.timestamp.getHours() + ":" + msg.timestamp.getMinutes() + ":" + msg.timestamp.getSeconds();
-    xw.Log.logWindow.document.write("<pre>" + formattedTime + " [" + msg.logLevel + "] " +
-      msg.text.replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;") +
-      "</pre><br/>");
-  }
-};
-
-xw.Log.display = function() {
-  var attr = "left=400,top=400,resizable=yes,scrollbars=yes,width=400,height=400";
-  xw.Log.logWindow = window.open("", "__xwidgetsDebugWindow", attr);
-  if (xw.Log.logWindow) {
-    xw.Log.logWindow.document.write("<html><head><title>XWidgets Log Window</title></head><body></body></html>");
-    var t = xw.Log.logWindow.document.getElementsByTagName("body").item(0);
-    t.style.fontFamily = "arial";
-    t.style.fontSize = "8pt";
-    
-    for (var i = 0; i < xw.Log.messages.length; i++) {
-      xw.Log.appendToWindow(xw.Log.messages[i]);
+  },
+  debug: function(text) {
+    xw.Log.append(text, "DEBUG");
+  },
+  info: function(text) {
+    xw.Log.append(text, "INFO");
+  },
+  warn: function(text) {
+    xw.Log.append(text, "WARN");
+  },
+  error: function(text) {
+    xw.Log.append(text, "ERROR");
+  },
+  appendToWindow: function(msg) {
+    if (xw.Log.logWindow) {
+      var formattedTime = msg.timestamp.getHours() + ":" + msg.timestamp.getMinutes() + ":" + msg.timestamp.getSeconds();
+      xw.Log.logWindow.document.write("<pre>" + formattedTime + " [" + msg.logLevel + "] " +
+        msg.text.replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;") +
+        "</pre><br/>");
+    }
+  },
+  display: function() {
+    var attr = "left=400,top=400,resizable=yes,scrollbars=yes,width=400,height=400";
+    xw.Log.logWindow = window.open("", "__xwidgetsDebugWindow", attr);
+    if (xw.Log.logWindow) {
+      xw.Log.logWindow.document.write("<html><head><title>XWidgets Log Window</title></head><body></body></html>");
+      var t = xw.Log.logWindow.document.getElementsByTagName("body").item(0);
+      t.style.fontFamily = "arial";
+      t.style.fontSize = "8pt";
+      
+      for (var i = 0; i < xw.Log.messages.length; i++) {
+        xw.Log.appendToWindow(xw.Log.messages[i]);
+      }
     }
   }
 };
@@ -462,47 +432,41 @@ xw.Log.display = function() {
 // Local Storage
 // TODO finish implementing this
 
-xw.LocalStorage = {};
-
-xw.LocalStorage.isSupported = function() {
-  try {
-    return 'localStorage' in window && window['localStorage'] !== null;
-  } catch (e) {
-    return false;
-  }
-};
-
-xw.LocalStorage.getItem = function(key) {
-  return xw.LocalStorage.isSupported() ? localStorage.getItem(key) : undefined;
-};
-
-xw.LocalStorage.setItem = function(key, value) {
-  if (xw.LocalStorage.isSupported()) {
-    localStorage[key] = value;
-  }
-};
-
-xw.LocalStorage.remove = function(key) {
-  if (xw.LocalStorage.isSupported()) {
-    localStorage.removeItem(key);
-  }
-};
-
-xw.LocalStorage.clear = function() {
-  if (xw.LocalStorage.isSupported()) {
-    localStorage.clear();
-  }
-};
-
-xw.LocalStorage.length = function() {
-  if (xw.LocalStorage.isSupported()) {
-    return localStorage.length;
-  }
-};
-
-xw.LocalStorage.getKey = function(idx) {
-  if (xw.LocalStorage.isSupported()) {
-    return localStorage.key(idx);
+xw.LocalStorage = {
+  isSupported: function() {
+    try {
+      return 'localStorage' in window && window['localStorage'] !== null;
+    } catch (e) {
+      return false;
+    }
+  },
+  getItem: function(key) {
+    return xw.LocalStorage.isSupported() ? localStorage.getItem(key) : undefined;
+  },
+  setItem: function(key, value) {
+    if (xw.LocalStorage.isSupported()) {
+      localStorage[key] = value;
+    }
+  },
+  remove: function(key) {
+    if (xw.LocalStorage.isSupported()) {
+      localStorage.removeItem(key);
+    }
+  },
+  clear: function() {
+    if (xw.LocalStorage.isSupported()) {
+      localStorage.clear();
+    }
+  },
+  length: function() {
+    if (xw.LocalStorage.isSupported()) {
+      return localStorage.length;
+    }
+  },
+  getKey: function(idx) {
+    if (xw.LocalStorage.isSupported()) {
+      return localStorage.key(idx);
+    }
   }
 };
 
@@ -510,259 +474,242 @@ xw.LocalStorage.getKey = function(idx) {
 // Expression language
 //
 
-xw.EL = {};
-xw.EL.resolvers = [];
-
-// Array of {widget: widget, propertyName: propertyName (or callback), expression: expr};
-xw.EL.bindings = [];
-
-// This is a function because some versions of some browsers cache the regex object,
-// so we need to create a new instance each time for cross-browser compatibility
-xw.EL.regex = function(expr) {  
-  return (typeof expr == "string") ? /#{(!?)([A-Za-z0-9]+(\.[A-Za-z0-9]+)*)}/g.exec(expr) :
-    /#{(!?)([A-Za-z0-9]+(\.[A-Za-z0-9]+)*)}/g;
-};
-
-xw.EL.isExpression = function(expr) {
-  return (typeof expr == "string") && xw.EL.regex().test(expr);
-};
-
-xw.EL.isValueExpression = function(expr) {
-  if (xw.EL.isExpression(expr)) {
-    var m = expr.match(xw.EL.regex());
-    return m.length == 1 && m[0] == expr;
-  }
-  return false;
-};
-
-xw.EL.isInterpolatedExpression = function(expr) { 
-  if (xw.EL.isExpression(expr)) {
-    var m = expr.match(xw.EL.regex());
-    return m.length >= 1 && m[0] != expr;
-  }
-  return false;
-};
-
-xw.EL.registerResolver = function(resolver) {
-  xw.EL.resolvers.push(resolver);
-};
-
-// A helper method that creates a single-value resolver
-xw.EL.setValue = function(expr, value) {
-  xw.EL.registerResolver({
-    canResolve: function(p1) {
-      return expr == p1;
-    },
-    resolve: function(p1) {
-      return expr == p1 ? value : undefined;
+xw.EL = {
+  resolvers: [],
+  // Array of {widget: widget, propertyName: propertyName (or callback), expression: expr};
+  bindings: [],
+  // This is a function because some versions of some browsers cache the regex object,
+  // so we need to create a new instance each time for cross-browser compatibility
+  regex: function(expr) {  
+    return (typeof expr == "string") ? /#{(!?)([A-Za-z0-9]+(\.[A-Za-z0-9]+)*)}/g.exec(expr) :
+      /#{(!?)([A-Za-z0-9]+(\.[A-Za-z0-9]+)*)}/g;
+  },
+  isExpression: function(expr) {
+    return (typeof expr == "string") && xw.EL.regex().test(expr);
+  },
+  isValueExpression: function(expr) {
+    if (xw.EL.isExpression(expr)) {
+      var m = expr.match(xw.EL.regex());
+      return m.length == 1 && m[0] == expr;
     }
-  });
-};
-
-xw.EL.unregisterResolver = function(resolver) {
-  for (var i = xw.EL.resolvers.length - 1; i >= 0; i--) {
-    if (xw.EL.resolvers[i] == resolver) {
-      xw.EL.resolvers.splice(i, 1);
-      break;
+    return false;
+  },
+  isInterpolatedExpression: function(expr) { 
+    if (xw.EL.isExpression(expr)) {
+      var m = expr.match(xw.EL.regex());
+      return m.length >= 1 && m[0] != expr;
     }
-  }
-};
-
-xw.EL.destroyViewBindings = function(view) {
-  for (var i = xw.EL.bindings.length - 1; i >= 0; i--) {
-    if (xw.EL.bindings[i].widget.view == view) {
-      xw.EL.bindings.splice(i, 1);
+    return false;
+  },
+  registerResolver: function(resolver) {
+    xw.EL.resolvers.push(resolver);
+  },
+  // A helper method that creates a single-value resolver
+  setValue: function(expr, value) {
+    xw.EL.registerResolver({
+      canResolve: function(p1) {
+        return expr == p1;
+      },
+      resolve: function(p1) {
+        return expr == p1 ? value : undefined;
+      }
+    });
+  },
+  unregisterResolver: function(resolver) {
+    for (var i = xw.EL.resolvers.length - 1; i >= 0; i--) {
+      if (xw.EL.resolvers[i] == resolver) {
+        xw.EL.resolvers.splice(i, 1);
+        break;
+      }
     }
-  }
-};
-
-//
-// Invoked by an EL resolver when its value changes.  The resolver will invoke this
-// method with the rootName parameter containing the name of the root of the EL expression.
-// Any bindings that have the same root name will be evaluated.
-//
-xw.EL.notify = function(rootName) {
-  for (var i = 0; i < xw.EL.bindings.length; i++) { 
-    var binding = xw.EL.bindings[i];
-    var match = false;
+  },
+  destroyViewBindings: function(view) {
+    for (var i = xw.EL.bindings.length - 1; i >= 0; i--) {
+      if (xw.EL.bindings[i].widget.view == view) {
+        xw.EL.bindings.splice(i, 1);
+      }
+    }
+  },
+  //
+  // Invoked by an EL resolver when its value changes.  The resolver will invoke this
+  // method with the rootName parameter containing the name of the root of the EL expression.
+  // Any bindings that have the same root name will be evaluated.
+  //
+  notify: function(rootName) {
+    for (var i = 0; i < xw.EL.bindings.length; i++) { 
+      var binding = xw.EL.bindings[i];
+      var match = false;
+      
+      if (binding.interpolated) {
+        for (var j = 0; j < binding.expressions.length; j++) {
+          if (xw.EL.rootName(binding.expressions[j]) == rootName) {
+            binding.value = xw.EL.interpolate(binding.widget, binding.expression);
+            match = true;
+            break;
+          }
+        }
+      } else if (xw.EL.rootName(binding.expression) == rootName) {    
+        binding.value = xw.EL.eval(binding.widget, binding.expression);
+        match = true;
+      }
+      
+      if (match) {
+        if (binding.propertyName) {
+          xw.Sys.setObjectProperty(binding.widget, binding.propertyName, binding.value);    
+        } else if (binding.callback) {
+          binding.callback(binding.value);
+        }
+      }
+    }
+  },
+  // Creates a new EL binding for a widget, to notify that widget when the EL value changes
+  // Params:
+  //   widget - the widget to bind to (must not be null)
+  //   receiver - either a property name of the widget, or a callback function
+  //   expr - the EL expression, either a single value binding expression (e.g. "#{foo}")
+  //          or an interpolated expression (e.g. "#{foo}/#{bar}")
+  createBinding: function(widget, receiver, expr) {
+    var binding = {widget: widget,expression: expr};
+    binding.interpolated = xw.EL.isInterpolatedExpression(expr);
+   
+    if (typeof receiver == "string") {
+      binding.propertyName = receiver;
+    } else {
+      binding.callback = receiver;
+    }
     
     if (binding.interpolated) {
-      for (var j = 0; j < binding.expressions.length; j++) {
-        if (xw.EL.rootName(binding.expressions[j]) == rootName) {
-          binding.value = xw.EL.interpolate(binding.widget, binding.expression);
-          match = true;
-          break;
-        }
-      }
-    } else if (xw.EL.rootName(binding.expression) == rootName) {    
-      binding.value = xw.EL.eval(binding.widget, binding.expression);
-      match = true;
+      binding.expressions = expr.match(xw.EL.regex());  
     }
     
-    if (match) {
-      if (binding.propertyName) {
-        xw.Sys.setObjectProperty(binding.widget, binding.propertyName, binding.value);    
-      } else if (binding.callback) {
-        binding.callback(binding.value);
-      }
-    }
-  }
-};
-
-// Creates a new EL binding for a widget, to notify that widget when the EL value changes
-// Params:
-//   widget - the widget to bind to (must not be null)
-//   receiver - either a property name of the widget, or a callback function
-//   expr - the EL expression, either a single value binding expression (e.g. "#{foo}")
-//          or an interpolated expression (e.g. "#{foo}/#{bar}")
-xw.EL.createBinding = function(widget, receiver, expr) {
-  var binding = {widget: widget,expression: expr};
-  binding.interpolated = xw.EL.isInterpolatedExpression(expr);
- 
-  if (typeof receiver == "string") {
-    binding.propertyName = receiver;
-  } else {
-    binding.callback = receiver;
-  }
-  
-  if (binding.interpolated) {
-    binding.expressions = expr.match(xw.EL.regex());  
-  }
-  
-  xw.EL.bindings.push(binding);
-  
-  if (binding.interpolated) {
-    return xw.EL.interpolate(widget, expr);
-  } else {
-    return xw.EL.eval(widget, expr);
-  }
-};
-
-xw.EL.clearWidgetBindings = function(widget) {
-  for (var i = xw.EL.bindings.length - 1; i >= 0; i--) {
-    if (xw.EL.bindings[i].widget == widget) {
-      xw.EL.bindings.splice(i, 1);
-    }
-  }
-};
-
-xw.EL.eval = function(widget, expr) {
-  var e = xw.EL.regex(expr);
-  if (e === null) {
-    throw "Error evaluating EL - [" + expr + "] is an invalid expression.";
-  }
-
-  var invert = e[1] === "!";
-  var parts = e[2].split(".");
-  var root = null;
-        
-  // First we walk up the component tree to see if the variable can be resolved within the widget's hierarchy
-  var w = widget;
-  while (w != null && !(w instanceof xw.View)) {
-    if (xw.Sys.isDefined(w.resolve) && (typeof w.resolve == "function")) {
-      var v = w.resolve(parts[0]);
-      if (v != undefined) {
-        root = v;
-        break;
-      }
-    }
-    w = w.parent;    
-  } 
-  
-  if (root === null) {
-    var w = widget.getOwner()._registeredWidgets[parts[0]];
-
-    // Next we check if there are any named widgets within the same view that match        
-    if (xw.Sys.isDefined(w)) {  
-      root = w;
-    // Last, we check all of the registered EL resolvers
+    xw.EL.bindings.push(binding);
+    
+    if (binding.interpolated) {
+      return xw.EL.interpolate(widget, expr);
     } else {
-      for (var i = 0; i < xw.EL.resolvers.length; i++) {    
-        if (xw.EL.resolvers[i].canResolve(parts[0])) {
-          root = xw.EL.resolvers[i].resolve(parts[0]);
+      return xw.EL.eval(widget, expr);
+    }
+  },
+  clearWidgetBindings: function(widget) {
+    for (var i = xw.EL.bindings.length - 1; i >= 0; i--) {
+      if (xw.EL.bindings[i].widget == widget) {
+        xw.EL.bindings.splice(i, 1);
+      }
+    }
+  },
+  eval: function(widget, expr) {
+    var e = xw.EL.regex(expr);
+    if (e === null) {
+      throw "Error evaluating EL - [" + expr + "] is an invalid expression.";
+    }
+
+    var invert = e[1] === "!";
+    var parts = e[2].split(".");
+    var root = null;
+          
+    // First we walk up the component tree to see if the variable can be resolved within the widget's hierarchy
+    var w = widget;
+    while (w != null && !(w instanceof xw.View)) {
+      if (xw.Sys.isDefined(w.resolve) && (typeof w.resolve == "function")) {
+        var v = w.resolve(parts[0]);
+        if (v != undefined) {
+          root = v;
+          break;
+        }
+      }
+      w = w.parent;    
+    } 
+    
+    if (root === null) {
+      var w = widget.getOwner()._registeredWidgets[parts[0]];
+
+      // Next we check if there are any named widgets within the same view that match        
+      if (xw.Sys.isDefined(w)) {  
+        root = w;
+      // Last, we check all of the registered EL resolvers
+      } else {
+        for (var i = 0; i < xw.EL.resolvers.length; i++) {    
+          if (xw.EL.resolvers[i].canResolve(parts[0])) {
+            root = xw.EL.resolvers[i].resolve(parts[0]);
+            break;
+          }
+        }
+      }
+    }
+    
+    // Lastly we check any data modules
+    if (root === null) {
+      for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
+        var dm = xw.Controller.activeDataModules[i];
+        var w = dm._registeredWidgets[parts[0]];
+        if (xw.Sys.isDefined(w)) {
+          root = w;
           break;
         }
       }
     }
-  }
-  
-  // Lastly we check any data modules
-  if (root === null) {
-    for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
-      var dm = xw.Controller.activeDataModules[i];
-      var w = dm._registeredWidgets[parts[0]];
-      if (xw.Sys.isDefined(w)) {
-        root = w;
-        break;
-      }
+    
+    if (root === null) {
+      return undefined;
     }
-  }
-  
-  if (root === null) {
-    return undefined;
-  }
-  
-  var value = root;
-  for (var i = 1; i < parts.length; i++) {
-    value = value[parts[i]];
-  }
-  return invert ? !value : value;  
-};
-
-xw.EL.rootName = function(expr) {
-  return xw.EL.regex(expr)[2].split(".")[0];
-};
-
-xw.EL.interpolate = function(widget, text) {
-  var replaced = text;
-  
-  if (xw.Sys.isDefined(replaced) && replaced !== null) {
-    var expressions = text.match(xw.EL.regex());
-    if (expressions != null) {
-      for (var i = 0; i < expressions.length; i++) {
-        var val = xw.EL.eval(widget, expressions[i]);
-        if (xw.Sys.isUndefined(val)) {
-          val = "undefined"; 
-        } else if (val === null) {
-          val = "null";
+    
+    var value = root;
+    for (var i = 1; i < parts.length; i++) {
+      value = value[parts[i]];
+    }
+    return invert ? !value : value;  
+  },
+  rootName: function(expr) {
+    return xw.EL.regex(expr)[2].split(".")[0];
+  },
+  interpolate: function(widget, text) {
+    var replaced = text;
+    
+    if (xw.Sys.isDefined(replaced) && replaced !== null) {
+      var expressions = text.match(xw.EL.regex());
+      if (expressions != null) {
+        for (var i = 0; i < expressions.length; i++) {
+          var val = xw.EL.eval(widget, expressions[i]);
+          if (xw.Sys.isUndefined(val)) {
+            val = "undefined"; 
+          } else if (val === null) {
+            val = "null";
+          }
+          replaced = replaced.replace(expressions[i], val);
         }
-        replaced = replaced.replace(expressions[i], val);
       }
     }
+    return replaced;
   }
-  return replaced;
 };
 
 //
 // Event bus
 //
-xw.Event = {};
+xw.Event = {
+  observers: {},
+  registerObserver: function(event, observer) {  
+    if (xw.Sys.isUndefined(observer.fire) || (typeof observer.fire !== "function")) {
+      alert("Error - could not register event observer [" + observer + "] for event [" + event + "] - " +
+        "observer does not define a fire() method");
+    }
 
-xw.Event.observers = {};
-
-xw.Event.registerObserver = function(event, observer) {  
-  if (xw.Sys.isUndefined(observer.fire) || (typeof observer.fire !== "function")) {
-    alert("Error - could not register event observer [" + observer + "] for event [" + event + "] - " +
-      "observer does not define a fire() method");
-  }
-
-  if (xw.Sys.isUndefined(xw.Event.observers[event])) {
-    xw.Event.observers[event] = [];
-  }
-  xw.Event.observers[event].push(observer);
-};
-
-xw.Event.unregisterObserver = function(observer) {
-  var check = function(val) { return val == observer; };
-  for (var event in xw.Event.observers) {
-    xw.Sys.deleteArrayElements(xw.Event.observers[event], check);
-  }
-};
-
-xw.Event.fire = function(event, params) {
-  if (xw.Sys.isDefined(xw.Event.observers[event])) {
-    for (var i = 0; i < xw.Event.observers[event].length; i++) {
-      xw.Event.observers[event][i].fire(params);
+    if (xw.Sys.isUndefined(xw.Event.observers[event])) {
+      xw.Event.observers[event] = [];
+    }
+    xw.Event.observers[event].push(observer);
+  },
+  unregisterObserver: function(observer) {
+    var check = function(val) { return val == observer; };
+    for (var event in xw.Event.observers) {
+      xw.Sys.deleteArrayElements(xw.Event.observers[event], check);
+    }
+  },
+  fire: function(event, params) {
+    if (xw.Sys.isDefined(xw.Event.observers[event])) {
+      for (var i = 0; i < xw.Event.observers[event].length; i++) {
+        xw.Event.observers[event][i].fire(params);
+      }
     }
   }
 };
@@ -2040,107 +1987,99 @@ xw.DataModule = xw.NonVisual.extend({
 // GENERAL METHODS
 //
 
-// Define an object to hold popup window variables
+// Utility class for creating a modal dialog window
 xw.Popup = {
   windowClass: "xwPopupWindow",
   titleClass: "xwPopupTitle",
   closeButtonClass: "xwPopupCloseButton",
-  backgroundClass: "xwPopupBackground"
-};
-
-//
-// Opens a view in a modal popup window
-//
-xw.openPopup = function(viewName, title, width, height) {
-  var bg = document.createElement("div");
-  bg.style.zIndex = "101";
-  bg.style.backgroundColor = "#000000";
-  if (xw.Popup.backgroundClass !== null) {
-    bg.className = xw.Popup.backgroundClass;
-  } 
-  
-  // Set transparency
-  bg.style.filter = "alpha(opacity=25);"  
-  bg.style.MozOpacity = ".25";
-  bg.style.opacity = ".25";  
-  bg.style.position = "fixed";
-  bg.style.top = "0px";
-  bg.style.left = "0px";
-  bg.style.right = "0px";
-  bg.style.bottom = "0px";
-  
-  xw.Popup.background = bg;
-
-  var outer = document.createElement("div");
-  outer.style.position = "absolute";
-  outer.style.zIndex = 123;
-  outer.style.width = (xw.Sys.isUndefined(width) ? "400px" : width + "px");
-  outer.style.height = (xw.Sys.isUndefined(height) ? "400px" : height + "px");
-  outer.style.left = "0px";
-  outer.style.right = "0px";
-  outer.style.top = "0px";  
-  outer.style.bottom = "0px";
-  outer.style.overflow = "hidden";
-  outer.style.marginLeft = "auto";
-  outer.style.marginRight = "auto";
-  outer.style.marginTop = "auto";
-  outer.style.marginBottom = "auto";
-  outer.style.paddingLeft = "18px";
-  outer.style.paddingRight = "30px";
-  outer.style.paddingTop = "18px";
-  outer.style.paddingBottom = "30px"; 
-  xw.Popup.outer = outer;
-  
-  var inner = document.createElement("div");
-  inner.style.position = "relative";
-  inner.style.backgroundColor = "#ffffff";  
-  inner.style.width = "100%";
-  inner.style.height = "100%"; 
-  inner.style.boxShadow = "4px 4px 10px 2px #999";
-  inner.style.MozBoxShadow = "4px 4px 10px 2px #999";
-  inner.style.WebkitBoxShadow = "4px 4px 10px 2px #999";
-  inner.style.zIndex = 130; 
-  
-  if (xw.Popup.windowClass !== null) {
-    inner.className = xw.Popup.windowClass;
-  }  
-  
-  outer.appendChild(inner);
-  
-  var closebtn = document.createElement("div");
-  closebtn.className = xw.Popup.closeButtonClass;
-  closebtn.onclick = xw.closePopup;
-  closebtn.style.zIndex = 150;
-  inner.appendChild(closebtn);  
+  backgroundClass: "xwPopupBackground",
+  open: function(viewName, title, width, height) {
+    var bg = document.createElement("div");
+    bg.style.zIndex = "101";
+    bg.style.backgroundColor = "#000000";
+    if (xw.Popup.backgroundClass !== null) {
+      bg.className = xw.Popup.backgroundClass;
+    } 
     
-  var titleDiv = document.createElement("div");
-  titleDiv.appendChild(document.createTextNode(title));
-  titleDiv.className = xw.Popup.titleClass;
-  inner.appendChild(titleDiv);
-  
-  var contentDiv = document.createElement("div");
-  contentDiv.style.overflowX = "auto";
-  contentDiv.style.overflowY = "auto";
-  
-  inner.appendChild(contentDiv);
-  
-  xw.open(viewName, null, contentDiv);
+    // Set transparency
+    bg.style.filter = "alpha(opacity=25);"  
+    bg.style.MozOpacity = ".25";
+    bg.style.opacity = ".25";  
+    bg.style.position = "fixed";
+    bg.style.top = "0px";
+    bg.style.left = "0px";
+    bg.style.right = "0px";
+    bg.style.bottom = "0px";
+    
+    xw.Popup.background = bg;
 
-  document.body.appendChild(bg);
-  document.body.appendChild(outer);
-};
+    var outer = document.createElement("div");
+    outer.style.position = "absolute";
+    outer.style.zIndex = 123;
+    outer.style.width = (xw.Sys.isUndefined(width) ? "400px" : width + "px");
+    outer.style.height = (xw.Sys.isUndefined(height) ? "400px" : height + "px");
+    outer.style.left = "0px";
+    outer.style.right = "0px";
+    outer.style.top = "0px";  
+    outer.style.bottom = "0px";
+    outer.style.overflow = "hidden";
+    outer.style.marginLeft = "auto";
+    outer.style.marginRight = "auto";
+    outer.style.marginTop = "auto";
+    outer.style.marginBottom = "auto";
+    outer.style.paddingLeft = "18px";
+    outer.style.paddingRight = "30px";
+    outer.style.paddingTop = "18px";
+    outer.style.paddingBottom = "30px"; 
+    xw.Popup.outer = outer;
+    
+    var inner = document.createElement("div");
+    inner.style.position = "relative";
+    inner.style.backgroundColor = "#ffffff";  
+    inner.style.width = "100%";
+    inner.style.height = "100%"; 
+    inner.style.boxShadow = "4px 4px 10px 2px #999";
+    inner.style.MozBoxShadow = "4px 4px 10px 2px #999";
+    inner.style.WebkitBoxShadow = "4px 4px 10px 2px #999";
+    inner.style.zIndex = 130; 
+    
+    if (xw.Popup.windowClass !== null) {
+      inner.className = xw.Popup.windowClass;
+    }  
+    
+    outer.appendChild(inner);
+    
+    var closebtn = document.createElement("div");
+    closebtn.className = xw.Popup.closeButtonClass;
+    closebtn.onclick = xw.closePopup;
+    closebtn.style.zIndex = 150;
+    inner.appendChild(closebtn);  
+      
+    var titleDiv = document.createElement("div");
+    titleDiv.appendChild(document.createTextNode(title));
+    titleDiv.className = xw.Popup.titleClass;
+    inner.appendChild(titleDiv);
+    
+    var contentDiv = document.createElement("div");
+    contentDiv.style.overflowX = "auto";
+    contentDiv.style.overflowY = "auto";
+    
+    inner.appendChild(contentDiv);
+    
+    xw.open(viewName, null, contentDiv);
 
-//
-// Closes the popup window
-//
-xw.closePopup = function() {
-  if (xw.Popup.outer != null) {
-    document.body.removeChild(xw.Popup.outer);
-    xw.Popup.outer = null;
-  }
-  if (xw.Popup.background != null) {
-    document.body.removeChild(xw.Popup.background);
-    xw.Popup.background = null;
+    document.body.appendChild(bg);
+    document.body.appendChild(outer);
+  },
+  close: function() {
+    if (xw.Popup.outer != null) {
+      document.body.removeChild(xw.Popup.outer);
+      xw.Popup.outer = null;
+    }
+    if (xw.Popup.background != null) {
+      document.body.removeChild(xw.Popup.background);
+      xw.Popup.background = null;
+    }
   }
 };
 
