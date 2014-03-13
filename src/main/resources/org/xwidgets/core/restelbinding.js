@@ -1,8 +1,9 @@
-widget("org.xwidgets.core.RestELBinding", xw.NonVisual, {
+package("org.xwidgets.core");
+org.xwidgets.core.RestELBinding = xw.NonVisual.extend({
   _constructor: function() {
     this.registerProperty("binding");
-    this.registerProperty("restEndpoint");
-    this.registerProperty("mode", "JSON"); 
+    this.registerProperty("restEndpoint", {elListener: "restEndpoint"});
+    this.registerProperty("mode", {default: "JSON"});
     this.value = undefined;
   },
   open: function() {

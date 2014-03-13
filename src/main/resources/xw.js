@@ -1,36 +1,7 @@
-function widget(fullName, superClass, methods) {
-  var i;
-  var pkg = window;
-  var parts = fullName.split(".");
-  for (i = 0; i < parts.length; i++) {
-    if (i == (parts.length - 1)) {
-      var className = parts[i];
-      var f = function() { 
-        this._className = fullName;
-        if (typeof superClass == "function") {
-          superClass.call();
-        }
-        if (typeof this._constructor == "function") {
-          this._constructor(); 
-        }
-      };
-      if (superClass) {
-        f.prototype = new superClass();
-      }
-      
-      for (m in methods) {
-        f.prototype[m] = methods[m];
-      }      
-           
-      pkg[className] = f;
-    } else {
-      if (typeof pkg[parts[i]] === "undefined") {
-        pkg[parts[i]] = {};
-      }
-      pkg = pkg[parts[i]];
-    }
-  }
-};
+/**
+ * Core XWidgets framework
+ * @author Shane Bryzak
+ */
 
 // object.watch support - Public Domain (thanks to eligrey - https://gist.github.com/eligrey/384583)
 if (!Object.prototype.watch) {
@@ -74,6 +45,7 @@ if (!Object.prototype.unwatch) {
   });
 };
 
+// This function is redundant, it can be removed after all core components have been updated.
 function package(fullName) {
   var i;
   var pkg = window;
@@ -86,27 +58,23 @@ function package(fullName) {
   }
 }
 
-xw = {};
-
-//
-// Constants
-//
-xw.CORE_NAMESPACE = "http://xwidgets.org/core";
-xw.XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml";
-
-//
-// Browser info - based on Prototype JS
-//
-xw.Browser = function() {
-  var ua = navigator.userAgent;
-  var isOpera = Object.prototype.toString.call(window.opera) === '[object Opera]';
-  return {
-    IE:             !!window.attachEvent && !isOpera,
-    Opera:          isOpera,
-    WebKit:         ua.indexOf('AppleWebKit/') > -1,
-    Gecko:          ua.indexOf('Gecko') > -1 && ua.indexOf('KHTML') === -1,
-    MobileSafari:   /Apple.*Mobile.*Safari/.test(ua)
-  };
+// XWidgets namespace
+var xw = {
+  // Constants
+  CORE_NAMESPACE: "http://xwidgets.org/core",
+  XHTML_NAMESPACE: "http://www.w3.org/1999/xhtml",
+  // Methods
+  Browser: function() {
+    var ua = navigator.userAgent;
+    var isOpera = Object.prototype.toString.call(window.opera) === '[object Opera]';
+    return {
+      IE:             !!window.attachEvent && !isOpera,
+      Opera:          isOpera,
+      WebKit:         ua.indexOf('AppleWebKit/') > -1,
+      Gecko:          ua.indexOf('Gecko') > -1 && ua.indexOf('KHTML') === -1,
+      MobileSafari:   /Apple.*Mobile.*Safari/.test(ua)
+    }
+  }
 };
 
 //
@@ -492,7 +460,7 @@ xw.Log.display = function() {
 
 // 
 // Local Storage
-//
+// TODO finish implementing this
 
 xw.LocalStorage = {};
 
@@ -1304,14 +1272,18 @@ xw.Controller.openView = function(viewName, definition, params, c) {
   // If anything else is remaining, clear it
   xw.Sys.clearChildren(container);
     
-  var view = new xw.View(viewName, params);
+  var view = new xw.View();
+  view.viewName = viewName;
+  view.params = params;
   xw.Controller.parseChildren(view, definition.children, view);
   xw.Controller.activeViews.push({container: container, view: view});
   view.render(container);
 };
 
 xw.Controller.openDataModule = function(dataModule, definition, params) {
-  var dm = new xw.DataModule(dataModule, params);
+  var dm = new xw.DataModule();
+  dm.dataModule = dataModule;
+  dm.params = params;
   xw.Controller.parseChildren(dm, definition.children, dm);
   xw.Controller.activeDataModules.push(dm);
   if (typeof dm.open == "function") {
@@ -1655,428 +1627,426 @@ xw.Action.prototype.getOwner = function() {
   }
 };
 
+/* Simple JavaScript Inheritance
+ * By John Resig http://ejohn.org/
+ * MIT Licensed.
+ * - Adapted from http://ejohn.org/blog/simple-javascript-inheritance/
+ */
+// Inspired by base2 and Prototype
+(function(){
+  var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
+  xw.Class = function(){}; 
+  xw.Class.extend = function(prop) {
+    var _super = this.prototype;
+    initializing = true;
+    var prototype = new this();
+    initializing = false;
+   
+    for (var name in prop) {
+      prototype[name] = typeof prop[name] == "function" &&
+        typeof _super[name] == "function" && fnTest.test(prop[name]) ?
+        (function(name, fn){
+          return function() {
+            var tmp = this._super;
+            this._super = _super[name];
+            var ret = fn.apply(this, arguments);        
+            this._super = tmp;           
+            return ret;
+          };
+        })(name, prop[name]) :
+        prop[name];
+    }
+   
+    function Class() {
+      if (!initializing && this._constructor)
+        this._constructor.apply(this, arguments);
+    }   
+    Class.prototype = prototype;
+    Class.prototype.constructor = Class;
+    Class.extend = arguments.callee;  
+    return Class;
+  };
+})();
+
 //
 // Base class for widgets
 //
-xw.Widget = function() {
-  this.parent = null;
-  this.children = [];  
-  
-  // Every widget implementation must provide a property that contains the
-  // fully qualified widget name
-  this._className = null;
-  
-  // metadata containing the known properties for this widget
-  this._registeredProperties = [];
-  
-  // metadata containing the known events for this widget
-  this._registeredEvents = [];  
-  
-  // register the id property
-  this._registeredProperties.push("id"); 
-};
+xw.Widget = xw.Class.extend({
+  _constructor: function() {
+    this.parent = null;
+    this.children = [];  
+    
+    // Every widget implementation must provide a property that contains the
+    // fully qualified widget name
+    this._className = null;
+  },
+  getId: function() {
+    return this.id;
+  },
+  setId: function(id) {
+    // register the id of this widget with the owning view.
+    if (xw.Sys.isDefined(this.id)) {
+      this.getOwner().unregisterWidget(this);
+      this.id = null;
+    } else {
+      this.id = id;
+      this.getOwner().registerWidget(this);  
+    }
+  },
+  getOwner: function() {
+    if (xw.Sys.isDefined(this.view)) {
+      return this.view;
+    } else if (xw.Sys.isDefined(this.dataModule)) {
+      return this.dataModule;
+    }
+  },
+  setOwner: function(owner) {
+    if (owner instanceof xw.View) {
+      this.view = owner;
+    } else if (owner instanceof xw.DataModule) {
+      this.dataModule = owner;
+    }
+  },
+  setParent: function(parent) {
+    this.parent = parent;
+  },
+  registerProperty: function(name, options) {
+    if (xw.Sys.isUndefined(name)) {
+      throw "No name specified for registered property on object [" + this.toString() + "]";
+    }
+    
+    if (xw.Sys.isUndefined(this._registeredProperties)) {
+      // register the id property
+      this._registeredProperties = {id: undefined};    
+    }
 
-xw.Widget.prototype.getId = function() {
-  return this.id;
-};
+    if (xw.Sys.isDefined(this._registeredProperties[name])) {
+      throw "Property [" + name + "] already registered for object [" + this.toString() + "]";
+    }
+    
+    this._registeredProperties[name] = options;
 
-xw.Widget.prototype.setId = function(id) {
-  // register the id of this widget with the owning view.
-  if (xw.Sys.isDefined(this.id)) {
-    this.getOwner().unregisterWidget(this);
-    this.id = null;
-  } else {
-    this.id = id;
-    this.getOwner().registerWidget(this);  
-  }
-};
-
-xw.Widget.prototype.getOwner = function() {
-  if (xw.Sys.isDefined(this.view)) {
-    return this.view;
-  } else if (xw.Sys.isDefined(this.dataModule)) {
-    return this.dataModule;
-  }
-};
-
-xw.Widget.prototype.setOwner = function(owner) {
-  if (owner instanceof xw.View) {
-    this.view = owner;
-  } else if (owner instanceof xw.DataModule) {
-    this.dataModule = owner;
-  }
-};
-
-xw.Widget.prototype.setParent = function(parent) {
-  this.parent = parent;
-};
-
-xw.Widget.prototype.registerProperty = function(propertyName, defaultValue) {
-  if (!xw.Sys.arrayContains(this._registeredProperties, propertyName)) {
-    this._registeredProperties.push(propertyName);
-  }
-  if (xw.Sys.isDefined(defaultValue)) {
-    this[propertyName] = defaultValue;
-  }
-};
-
-xw.Widget.prototype.bindProperty = function(receiver, value) {
-  xw.EL.clearWidgetBindings(this);
-  if (xw.EL.isExpression(value)) {
-    xw.EL.createBinding(this, receiver, value);
-    return true;
-  } else {
-    return false;
-  }
-};
-
-xw.Widget.prototype.addEvent = function(control, eventName, event) {     
-  if (xw.Sys.isDefined(this["on" + eventName]) && xw.Sys.isDefined(event)) {        
-    var sender = this;
-    var action = function() {
-      event.invoke(sender);
+    var that = this;
+    var watcher = function(prop, oldVal, newVal) {
+      if (xw.EL.isExpression(oldVal)) {    
+        xw.EL.clearWidgetBindings(that);
+      }
+      if (xw.EL.isExpression(newVal)) {
+        var p = that._registeredProperties[prop];
+        if (xw.Sys.isDefined(p) &&
+            xw.Sys.isDefined(p.elListener)) {
+             return xw.EL.createBinding(that, p.elListener, newVal);
+        } else {
+          if (xw.EL.isValueExpression(newVal)) {
+            return xw.EL.eval(this, newVal);
+          } else if (xw.EL.isInterpolatedExpression(newVal)) {
+            return xw.EL.interpolate(this, newVal);
+          }
+        }
+      }    
+      return newVal;
     };
-    xw.Sys.chainEvent(control, eventName, action);
-  }
-};
+    
+    this.watch(name, watcher);
+    
+    if (xw.Sys.isDefined(options) && options != null) {
+      if (xw.Sys.isDefined(options.default)) {
+        this[name] = options.default;
+      }  
+    }
+  },
+  addEvent: function(control, eventName, event) {     
+    if (xw.Sys.isDefined(this["on" + eventName]) && xw.Sys.isDefined(event)) {        
+      var sender = this;
+      var action = function() {
+        event.invoke(sender);
+      };
+      xw.Sys.chainEvent(control, eventName, action);
+    }
+  },
+  registerEvent: function(eventName) {
+    if (xw.Sys.isUndefined(this._registeredEvents)) {
+      // metadata containing the known events for this widget
+      this._registeredEvents = [];        
+    }
+    if (!xw.Sys.arrayContains(this._registeredEvents, eventName)) {
+      this._registeredEvents.push(eventName);
+    }
+  },
+  destroy: function() {
+    // NO-OP
+  },
+    // Makes a cloned copy of the widget.  Any properties that contain
+    // references to other widgets will not be cloned, they will just be
+    // updated with a reference to that widget
+  clone: function(parent) {
+    var o = xw.Sys.newInstance(this._className);
 
-xw.Widget.prototype.registerEvent = function(eventName) {
-  if (!xw.Sys.arrayContains(this._registeredEvents, eventName)) {
-    this._registeredEvents.push(eventName);
-  }
-};
-
-xw.Widget.prototype.destroy = function() {
-  // NO-OP
-};
-
-//
-// Makes a cloned copy of the widget.  Any properties that contain
-// references to other widgets will not be cloned, they will just be
-// updated with a reference to that widget
-//
-xw.Widget.prototype.clone = function(parent) {
-  var o = xw.Sys.newInstance(this._className);
-
-  // Clone the registered properties only
-  for (var i = 0; i < this._registeredProperties.length; i++) {
-    var p = this._registeredProperties[i];
-    if (this[p] instanceof xw.Widget) {
-      o[p] = this[p];
-    } else {
-      o[p] = xw.Sys.cloneObject(this[p]);
-    }    
-  }
-  
-  // Set the parent and clone the children
-  o.parent = xw.Sys.isUndefined(parent) ? this.parent : parent;
-  for (var i = 0; i < this.children.length; i++) {
-    o.children.push(this.children[i].clone(o));
-  }
-  
-  return o;
-};
-
-xw.Widget.prototype.toString = function() {
-  return "xw.Widget[" + this.id + "]";
-};
-
-xw.Visual = function() {
-  xw.Widget.call(this);
-};
-
-xw.Visual.prototype = new xw.Widget();
-
-xw.Visual.prototype.renderChildren = function(container) {
-  var i;
-  for (i = 0; i < this.children.length; i++) {
-    if (this.children[i] instanceof xw.Visual) {  
-      if (xw.Sys.isUndefined(this.children[i].render)) {
-        throw "Error - widget [" + this.children[i] + "] extending xw.Visual does not provide a render() method";
+    // Clone the registered properties only
+    for (var i = 0; i < this._registeredProperties.length; i++) {
+      var p = this._registeredProperties[i];
+      if (this[p] instanceof xw.Widget) {
+        o[p] = this[p];
       } else {
-        this.children[i].render(container);       
+        o[p] = xw.Sys.cloneObject(this[p]);
+      }    
+    }
+    
+    // Set the parent and clone the children
+    o.parent = xw.Sys.isUndefined(parent) ? this.parent : parent;
+    for (var i = 0; i < this.children.length; i++) {
+      o.children.push(this.children[i].clone(o));
+    }   
+    return o;
+  },
+  toString: function() {
+    return "xw.Widget[" + this.id + "]";
+  }
+});
+
+xw.Visual = xw.Widget.extend({
+  _constructor: function() {
+    this._super(false);
+  },
+  renderChildren: function(container) {
+    var i;
+    for (i = 0; i < this.children.length; i++) {
+      if (this.children[i] instanceof xw.Visual) {  
+        if (xw.Sys.isUndefined(this.children[i].render)) {
+          throw "Error - widget [" + this.children[i] + "] extending xw.Visual does not provide a render() method";
+        } else {
+          this.children[i].render(container);       
+        }
+      } else if (this.children[i] instanceof xw.NonVisual) {     
+        if (typeof this.children[i].open == "function") {
+          this.children[i].open();
+        }
+      } else {
+        throw "Error - unrecognized widget type [" + this.children[i] + "] encountered in view definition";
       }
-    } else if (this.children[i] instanceof xw.NonVisual) {     
-      if (typeof this.children[i].open == "function") {
-        this.children[i].open();
-      }
-    } else {
-      throw "Error - unrecognized widget type [" + this.children[i] + "] encountered in view definition";
     }
   }
-};
+});
 
-xw.NonVisual = function() {
-  xw.Widget.call(this);
-};
-
-xw.NonVisual.prototype = new xw.Widget();
-
-xw.NonVisual.prototype.openChildren = function(container) {
-  var i;
-  for (i = 0; i < this.children.length; i++) {
-    if (this.children[i] instanceof xw.Visual) {  
-      throw "Error - widget extending xw.Visual may not be a child of a widget extending xw.NonVisual";
-    } else if (this.children[i] instanceof xw.NonVisual) {   
-      if (typeof this.children[i].open == "function") {   
-        this.children[i].open();
+xw.NonVisual = xw.Widget.extend({
+  _constructor: function() {
+    this._super(false);
+  },
+  openChildren: function(container) {
+    var i;
+    for (i = 0; i < this.children.length; i++) {
+      if (this.children[i] instanceof xw.Visual) {  
+        throw "Error - widget extending xw.Visual may not be a child of a widget extending xw.NonVisual";
+      } else if (this.children[i] instanceof xw.NonVisual) {   
+        if (typeof this.children[i].open == "function") {   
+          this.children[i].open();
+        }
+      } else {
+        throw "Error - unrecognized widget type [" + this.children[i] + "] encountered in view definition";
       }
-    } else {
-      throw "Error - unrecognized widget type [" + this.children[i] + "] encountered in view definition";
     }
   }
-};
+});
 
 // Represents an XHTML element
-xw.XHtml = function() {
-  xw.Visual.call(this);
-  this._className = "xw.XHtml";
-  this.registerProperty("tagName", null);
-  this.registerProperty("attributes", null);
-  this.control = null;
-};
-
-xw.XHtml.prototype = new xw.Visual();
-
-xw.XHtml.prototype.render = function(container) {
-  this.control = document.createElement(this.tagName);
-  for (var a in this.attributes) {
-    this.setAttribute(a, this.attributes[a]);
+xw.XHtml = xw.Visual.extend({
+  _constructor: function() {
+    this._super(false);
+    this.registerProperty("tagName", null);
+    this.registerProperty("attributes", null);
+    this.control = null;  
+  },
+  render: function(container) {
+    this.control = document.createElement(this.tagName);
+    for (var a in this.attributes) {
+      this.setAttribute(a, this.attributes[a]);
+    }
+    container.appendChild(this.control);
+    this.renderChildren(this.control);  
+  },
+  setAttribute: function(attribName, value) {
+    if (attribName == "class") {
+      this.control.className = value;
+    } else if (attribName == "style") {
+      this.control.style.cssText = value;
+    } else {
+      this.control[attribName] = value;
+    }
+  },
+  toString: function() {
+    return "xw.XHtml[" + this.tagName + "]"; 
   }
-  container.appendChild(this.control);
-  
-  this.renderChildren(this.control);
-};
-
-xw.XHtml.prototype.setAttribute = function(attribName, value) {
-  if (attribName == "class") {
-    this.control.className = value;
-  } else if (attribName == "style") {
-    this.control.style.cssText = value;
-  } else {
-    this.control[attribName] = value;
-  }
-}
-
-xw.XHtml.prototype.toString = function() {
-  return "xw.XHtml[" + this.tagName + "]"; 
-};
+});
 
 // Represents plain ol' text
-xw.Text = function() {
-  xw.Visual.call(this);
-  this._className = "xw.Text";
-  delete children;
-  this.registerProperty("value", "");
-  this.registerProperty("escape", true);
-  this.control = null;  
-  this.renderedText = "";
-};
-
-xw.Text.prototype = new xw.Visual();
-
-xw.Text.prototype.render = function(container) {
-  this.control = document.createElement("span");
-  container.appendChild(this.control);
-  this.renderText();
-};
-
-xw.Text.prototype.setRenderedText = function(text) {
-  this.renderedText = text;
-  this.renderText();
-};
-
-xw.Text.prototype.renderText = function() {
-  if (this.control !== null) {
-    var text = (xw.Sys.isDefined(this.renderedText) && this.renderedText !== null) ?
-       this.renderedText : "";
-      
-    if (this.escape) {
-      this.control.innerHTML = text;
-    } else {
-      if (!xw.Sys.isDefined(this.textNode)) {        
-        this.textNode = document.createTextNode();
-        this.control.appendChild(this.textNode);
+xw.Text = xw.Visual.extend({
+  _constructor: function() {
+    this._super(false);
+    delete children;
+    var that = this;
+    var cb = function(val) {
+      that.renderedText = val;
+      that.renderText();
+    };
+    this.registerProperty("value", {elListener: cb});
+    this.registerProperty("escape", {default: true});
+    this.control = null;  
+    this.renderedText = "";  
+  },
+  render: function(container) {
+    this.control = document.createElement("span");
+    container.appendChild(this.control);
+    this.renderText();  
+  },
+  renderText: function() {
+    if (this.control !== null) {
+      var text = (xw.Sys.isDefined(this.renderedText) && this.renderedText !== null) ?
+         this.renderedText : "";
+      if (this.escape) {
+        this.control.innerHTML = text;
+      } else {
+        if (!xw.Sys.isDefined(this.textNode)) {        
+          this.textNode = document.createTextNode();
+          this.control.appendChild(this.textNode);
+        }
+        this.textNode.nodeValue = text;
       }
-      this.textNode.nodeValue = text;
     }
+  },
+  toString: function() {
+    return "xw.Text[" + this.value + "]";
   }
-};
+});
 
-xw.Text.prototype.setValue = function(value) {
-  var that = this;
-  var cb = function(val) {
-    that.renderedText = val;
-    that.renderText();
-  };
-  if (!this.bindProperty(cb, value)) {
-    this.renderedText = value;
-    this.renderText();
-  }
-  this.value = value;
-};
-
-xw.Text.prototype.toString = function() {
-  return "xw.Text[" + this.value + "]";
-};
-
-xw.Container = function() {
-  xw.Visual.call(this);
-  this._className = "xw.Container";
-  
-  // FIXME hard coded the layout for now
-  this.layout = new xw.BorderLayout();
-}
-
-xw.Container.prototype = new xw.Visual();
-
-xw.Container.prototype.setLayout = function(layoutName) {
-  // TODO rewrite this entire function
-
-  //this.layout = 
-  
-
-  //if ("string" === (typeof layout)) {
-//    this.layoutManager = new xw.layoutManagers[layout](this);
-//  } else {
-    //this.layoutManager = layout;
-  //}  
-}
+xw.Container = xw.Visual.extend({
+  _constructor: function() {
+    this._super(false);
+    // FIXME hard coded the layout for now
+    this.layout = new xw.BorderLayout();  
+  },
+  setLayout: function(layoutName) { }  
+});
 
 //
 // A single instance of a view
 //
-xw.View = function(viewName, params) {   
-  xw.Container(this);
-  this._className = "xw.View";
-  this.viewName = viewName; 
-  this.params = params;
-  this.registerEvent("afterRender");
-  // The container control
-  this.container = null;  
-  this._registeredWidgets = {};  
-  delete this.parent;
-};
+xw.View = xw.Container.extend({
+  _constructor: function() {
+    this._super(false);
+    this.registerProperty("viewName");
+    this.registerProperty("params");
+    this.registerEvent("afterRender");
+    // The container control
+    this.container = null;  
+    this._registeredWidgets = {};  
+    delete this.parent;    
+  },
+  //
+  // Callback for window resize events
+  //
+  resize: function() {
+    // bubble the resize event through the component tree
+  },
+  render: function(container) {
+    this.container = container;
 
-xw.View.prototype = new xw.Container();
+    // Set the window resize callback so that we can respond to resize events
+    var target = this;
+    var callback = function() { target.resize(); };
+    xw.Sys.chainEvent(window, "resize", callback);
 
-//
-// Callback for window resize events
-//
-xw.View.prototype.resize = function() {
-  // bubble the resize event through the component tree
-};
-
-xw.View.prototype.render = function(container) {
-  this.container = container;
-
-  // Set the window resize callback so that we can respond to resize events
-  var target = this;
-  var callback = function() { target.resize(); };
-  xw.Sys.chainEvent(window, "resize", callback);
-
-  // Create the appropriate layout manager and layout the child controls
-  if (this.layout !== null) {
-    //this.layoutManager = new xw.BorderLayout();
-    this.layout.calculateLayout(this.children);
-  }    
-  
-  this.renderChildren(this.container);
-  
-  if (xw.Sys.isDefined(this.afterRender)) {
-    this.afterRender.invoke();
-  }
-};
-
-xw.View.prototype.appendChild = function(child) {
-  this.container.appendChild(child);
-};
-
-// Registers a named (i.e. having an "id" property) widget
-xw.View.prototype.registerWidget = function(widget) {
-  this._registeredWidgets[widget.id] = widget;
-};
-
-xw.View.prototype.unregisterWidget = function(widget) {
-  for (var id in this._registeredWidgets) {
-    if (this._registeredWidgets[id] == widget) {
-      delete this._registeredWidgets[id];
-      break;
+    // Create the appropriate layout manager and layout the child controls
+    if (this.layout !== null) {
+      //this.layoutManager = new xw.BorderLayout();
+      this.layout.calculateLayout(this.children);
+    }    
+    
+    this.renderChildren(this.container);
+    
+    if (xw.Sys.isDefined(this.afterRender)) {
+      this.afterRender.invoke();
     }
-  }
-};
-
-xw.View.prototype.destroy = function() {
-  xw.EL.destroyViewBindings(this);
-
-  if (this.container != null) {
-    if (xw.Sys.isDefined(this.children)) {
-      this.destroyChildren(this.children);
+  },
+  appendChild: function(child) {
+    this.container.appendChild(child);
+  },
+  // Registers a named (i.e. having an "id" property) widget
+  registerWidget: function(widget) {
+    this._registeredWidgets[widget.id] = widget;
+  },
+  unregisterWidget: function(widget) {
+    for (var id in this._registeredWidgets) {
+      if (this._registeredWidgets[id] == widget) {
+        delete this._registeredWidgets[id];
+        break;
+      }
     }
-  }
-};
+  },
+  destroy: function() {
+    xw.EL.destroyViewBindings(this);
 
-xw.View.prototype.destroyChildren = function(children) {
-  for (var i = 0; i < children.length; i++) {
-    if (xw.Sys.isDefined(children[i].children) && children[i].children.length > 0) {
-      this.destroyChildren(children[i].children);
+    if (this.container != null) {
+      if (xw.Sys.isDefined(this.children)) {
+        this.destroyChildren(this.children);
+      }
     }
-    children[i].destroy();
-  };
-};
-
-xw.View.prototype.toString = function() {
-  return "xw.View [" + this.viewName + "]";
-};
-
-xw.DataModule = function(moduleName, params) {
-  xw.NonVisual(this);
-  this._className = "xw.DataModule";
-  this.moduleName = moduleName; 
-  this.params = params;
-  this.registerEvent("afterOpen");
-  this._registeredWidgets = {};  
-  delete this.parent;
-};
-
-xw.DataModule.prototype = new xw.NonVisual();
-
-xw.DataModule.prototype.open = function() {
-  this.openChildren();
-  
-  if (xw.Sys.isDefined(this.afterOpen)) {
-    this.afterOpen.invoke();
+  },
+  destroyChildren: function(children) {
+    for (var i = 0; i < children.length; i++) {
+      if (xw.Sys.isDefined(children[i].children) && children[i].children.length > 0) {
+        this.destroyChildren(children[i].children);
+      }
+      children[i].destroy();
+    };
+  },
+  toString: function() {
+    return "xw.View [" + this.viewName + "]";
   }
-};
+});
 
-// Registers a named (i.e. having an "id" property) widget
-xw.DataModule.prototype.registerWidget = function(widget) {
-  this._registeredWidgets[widget.id] = widget;
-};
-
-xw.DataModule.prototype.unregisterWidget = function(widget) {
-  for (var id in this._registeredWidgets) {
-    if (this._registeredWidgets[id] == widget) {
-      delete this._registeredWidgets[id];
-      break;
+xw.DataModule = xw.NonVisual.extend({
+  _constructor: function() {
+    this._super(false);
+    this.registerProperty("moduleName");
+    this.registerProperty("params");
+    this.registerEvent("afterOpen");
+    this._registeredWidgets = {};  
+    delete this.parent;
+  },
+  open: function() {
+    this.openChildren();    
+    if (xw.Sys.isDefined(this.afterOpen)) {
+      this.afterOpen.invoke();
     }
+  },
+  // Registers a named (i.e. having an "id" property) widget
+  registerWidget: function(widget) {
+    this._registeredWidgets[widget.id] = widget;
+  },
+  unregisterWidget: function(widget) {
+    for (var id in this._registeredWidgets) {
+      if (this._registeredWidgets[id] == widget) {
+        delete this._registeredWidgets[id];
+        break;
+      }
+    }
+  },
+  toString: function() {
+    return "xw.DataModule [" + this.moduleName + "]";
   }
-};
-
-xw.DataModule.prototype.toString = function() {
-  return "xw.DataModule [" + this.moduleName + "]";
-};
+});
 
 //
 // GENERAL METHODS
 //
 
 // Define an object to hold popup window variables
-xw.Popup = {};
-xw.Popup.windowClass = "xwPopupWindow";
-xw.Popup.titleClass = "xwPopupTitle";
-xw.Popup.closeButtonClass = "xwPopupCloseButton";
-xw.Popup.backgroundClass = "xwPopupBackground";
+xw.Popup = {
+  windowClass: "xwPopupWindow",
+  titleClass: "xwPopupTitle",
+  closeButtonClass: "xwPopupCloseButton",
+  backgroundClass: "xwPopupBackground"
+};
 
 //
 // Opens a view in a modal popup window

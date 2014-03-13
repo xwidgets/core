@@ -1,7 +1,10 @@
-widget("org.xwidgets.core.RestEndpoint", xw.NonVisual, {
+package("org.xwidgets.core");
+
+org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
   _constructor: function() {
-    this.registerProperty("url", "");
-    this.registerProperty("method", "GET");
+    this._super(false);
+    this.registerProperty("url");
+    this.registerProperty("method", {default: "GET"});
     this.registerProperty("callback");
   },
   invoke: function() {
