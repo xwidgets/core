@@ -126,14 +126,14 @@ xw.Sys = {
           try {
             head.appendChild(e);           
           } catch (err) {
-            window.alert("There was an error loading the script from '" + url + "': " + err);
+            throw "There was an error loading the script from '" + url + "': " + err;
             return;
           }
           if (callback) {
             callback(url);
           }               
         } else if (req.status === 404) {
-          window.alert("404 error: the requested resource '" + url + "' could not be found.");
+          throw "404 error: the requested resource '" + url + "' could not be found.";
           if (failCallback) {
             failCallback();
           }
@@ -239,7 +239,7 @@ xw.Sys = {
     }
     else {
       // really old browsers
-      alert("your browser doesn't support adding event listeners");
+      throw "your browser doesn't support adding event listeners";
     }
   },
   unchainEvent: function(ctl, eventName, eventFunc) {
@@ -248,7 +248,7 @@ xw.Sys = {
     } else if (ctl.removeEventListener) {
       ctl.removeEventListener(eventName, eventFunc, false);
     } else {
-      alert("Your browser doesn't support removing event listeners");
+      throw "Your browser doesn't support removing event listeners";
     }
   },
   cancelEventBubble: function(event) {
@@ -1019,371 +1019,353 @@ xw.DefinitionParser.prototype.parseEvent = function(e) {
   }
 };
 
-xw.Controller = {};
-
-//
-// A cache of resource name:root definition node values
-//
-xw.Controller.resourceDefs = {};
-
-xw.Controller.activeViews = [];
-
-xw.Controller.activeDataModules = [];
-
-// A queue of resources to be opened
-xw.Controller.queue = [];
-
-// Queued item states
-xw.Controller.QUEUE_STATUS_UNPROCESSED = 1;
-xw.Controller.QUEUE_STATUS_DEFINITION_LOADING = 2;
-xw.Controller.QUEUE_STATUS_DEFINITION_LOADED = 3;
-xw.Controller.QUEUE_STATUS_WIDGETS_LOADING = 4;
-xw.Controller.QUEUE_STATUS_WIDGETS_LOADED = 5;
-xw.Controller.QUEUE_STATUS_PROCESSED = 6;
-
-// 
-// Opens a resource, such as a view or data module
-//
-xw.Controller.open = function(resource, params, container) {
-  xw.Controller.queue.push({
-    resource: resource, 
-    params: params, 
-    container: container, 
-    status: xw.Controller.QUEUE_STATUS_UNPROCESSED
-  });
-  xw.Controller.processQueue();
-};
-
-xw.Controller.processQueue = function() {
-  for (var i = 0; i < xw.Controller.queue.length; i++) {
-    var item = xw.Controller.queue[i];
-    
-    if (item.status === xw.Controller.QUEUE_STATUS_UNPROCESSED ||
-        item.status === xw.Controller.QUEUE_STATUS_DEFINITION_LOADING) {
-      // If the resource is known, update its status
-      if (xw.Sys.isDefined(xw.Controller.resourceDefs[item.resource])) {
-        item.status = xw.Controller.QUEUE_STATUS_DEFINITION_LOADED;    
-      } else if (item.status === xw.Controller.QUEUE_STATUS_UNPROCESSED) {
-        // Otherwise load the resource
-        
-        // FIXME we should really double check that the resource isn't being loaded elsewhere, 
-        // like another queue item (however unlikely that might be)
-        item.status = xw.Controller.QUEUE_STATUS_DEFINITION_LOADING;
-        xw.Controller.loadResource(item.resource);
-      }    
-    }
-    
-    if (item.status === xw.Controller.QUEUE_STATUS_DEFINITION_LOADED) {
-      // Validate all of the widgets used by the resource    
-      var invalid = xw.Controller.validateWidgets(xw.Controller.resourceDefs[item.resource].children, []);
-      if (invalid.length > 0) {
-        // If there are invalid widgets, load them
-        item.status = xw.Controller.QUEUE_STATUS_WIDGETS_LOADING;
-        item.invalid = invalid;
-        
-        for (var j = 0; j < invalid.length; j++) {
-          if (xw.WidgetManager.getWidgetState(invalid[j]) === xw.WidgetManager.WS_FAILED) {
-            item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
-            alert("Could not open resource [" + item.resource + "], as widget [" + invalid[j] + "] failed to load.");
-            break;
-          }        
-        }      
-        
-        xw.WidgetManager.loadWidgets(invalid);
-      } else {
-        item.status = xw.Controller.QUEUE_STATUS_WIDGETS_LOADED;
-      }
-    }
-    
-    if (item.status === xw.Controller.QUEUE_STATUS_WIDGETS_LOADING) {
-      // Check if the widgets are loaded
-      var loaded = true;
+xw.Controller = {
+  //
+  // A cache of resource name:root definition node values
+  //
+  resourceDefs: {},
+  activeViews: [],
+  activeDataModules: [],
+  // A queue of resources to be opened
+  queue: [],
+  // Queued item states
+  QUEUE_STATUS_UNPROCESSED: 1,
+  QUEUE_STATUS_DEFINITION_LOADING: 2,
+  QUEUE_STATUS_DEFINITION_LOADED: 3,
+  QUEUE_STATUS_WIDGETS_LOADING: 4,
+  QUEUE_STATUS_WIDGETS_LOADED: 5,
+  QUEUE_STATUS_PROCESSED: 6,
+  // 
+  // Opens a resource, such as a view or data module
+  //
+  open: function(resource, params, container) {
+    xw.Controller.queue.push({
+      resource: resource, 
+      params: params, 
+      container: container, 
+      status: xw.Controller.QUEUE_STATUS_UNPROCESSED
+    });
+    xw.Controller.processQueue();
+  },
+  processQueue: function() {
+    for (var i = 0; i < xw.Controller.queue.length; i++) {
+      var item = xw.Controller.queue[i];
       
-      for (var j = 0; j < item.invalid.length; j++) {
-        var state = xw.WidgetManager.getWidgetState(item.invalid[j]);
-        if (state === xw.WidgetManager.WS_FAILED) {
-          item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
-          alert("Could not open resource [" + item.resource + "], as widget [" + item.invalid[j] + "] failed to load.");
-          break;
-        } else if (state !== xw.WidgetManager.WS_LOADED) {
-          loaded = false;
-          break;
+      if (item.status === xw.Controller.QUEUE_STATUS_UNPROCESSED ||
+          item.status === xw.Controller.QUEUE_STATUS_DEFINITION_LOADING) {
+        // If the resource is known, update its status
+        if (xw.Sys.isDefined(xw.Controller.resourceDefs[item.resource])) {
+          item.status = xw.Controller.QUEUE_STATUS_DEFINITION_LOADED;    
+        } else if (item.status === xw.Controller.QUEUE_STATUS_UNPROCESSED) {
+          // Otherwise load the resource
+          
+          // FIXME we should really double check that the resource isn't being loaded elsewhere, 
+          // like another queue item (however unlikely that might be)
+          item.status = xw.Controller.QUEUE_STATUS_DEFINITION_LOADING;
+          xw.Controller.loadResource(item.resource);
+        }    
+      }
+      
+      if (item.status === xw.Controller.QUEUE_STATUS_DEFINITION_LOADED) {
+        // Validate all of the widgets used by the resource    
+        var invalid = xw.Controller.validateWidgets(xw.Controller.resourceDefs[item.resource].children, []);
+        if (invalid.length > 0) {
+          // If there are invalid widgets, load them
+          item.status = xw.Controller.QUEUE_STATUS_WIDGETS_LOADING;
+          item.invalid = invalid;
+          
+          for (var j = 0; j < invalid.length; j++) {
+            if (xw.WidgetManager.getWidgetState(invalid[j]) === xw.WidgetManager.WS_FAILED) {
+              item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
+              alert("Could not open resource [" + item.resource + "], as widget [" + invalid[j] + "] failed to load.");
+              break;
+            }        
+          }      
+          
+          xw.WidgetManager.loadWidgets(invalid);
+        } else {
+          item.status = xw.Controller.QUEUE_STATUS_WIDGETS_LOADED;
         }
-      }    
+      }
       
-      if (loaded) {
-        item.status = xw.Controller.QUEUE_STATUS_WIDGETS_LOADED;
+      if (item.status === xw.Controller.QUEUE_STATUS_WIDGETS_LOADING) {
+        // Check if the widgets are loaded
+        var loaded = true;
+        
+        for (var j = 0; j < item.invalid.length; j++) {
+          var state = xw.WidgetManager.getWidgetState(item.invalid[j]);
+          if (state === xw.WidgetManager.WS_FAILED) {
+            item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
+            alert("Could not open resource [" + item.resource + "], as widget [" + item.invalid[j] + "] failed to load.");
+            break;
+          } else if (state !== xw.WidgetManager.WS_LOADED) {
+            loaded = false;
+            break;
+          }
+        }    
+        
+        if (loaded) {
+          item.status = xw.Controller.QUEUE_STATUS_WIDGETS_LOADED;
+        }
+      }
+      
+      if (item.status === xw.Controller.QUEUE_STATUS_WIDGETS_LOADED) {          
+        var def = xw.Controller.resourceDefs[item.resource];
+        item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
+        
+        var params = (xw.Sys.isDefined(item.params) && item.params !== null) ? item.params : {};
+        
+        if (def instanceof xw.ViewNode) {
+          xw.Controller.openView(item.resource, def, params, item.container);
+        } else if (def instanceof xw.DataModuleNode) {
+          xw.Controller.openDataModule(item.resource, def, params);
+        }    
+      }
+    }  
+
+    // Remove processed items from the queue  
+    for (var i = xw.Controller.queue.length - 1; i >= 0; i--) {
+      var item = xw.Controller.queue[i];
+      if (item.status === xw.Controller.QUEUE_STATUS_PROCESSED) {
+        xw.Controller.queue.splice(i,1);
       }
     }
-    
-    if (item.status === xw.Controller.QUEUE_STATUS_WIDGETS_LOADED) {          
-      var def = xw.Controller.resourceDefs[item.resource];
-      item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
-      
-      var params = (xw.Sys.isDefined(item.params) && item.params !== null) ? item.params : {};
-      
-      if (def instanceof xw.ViewNode) {
-        xw.Controller.openView(item.resource, def, params, item.container);
-      } else if (def instanceof xw.DataModuleNode) {
-        xw.Controller.openDataModule(item.resource, def, params);
-      }    
-    }
-  }  
-
-  // Remove processed items from the queue  
-  for (var i = xw.Controller.queue.length - 1; i >= 0; i--) {
-    var item = xw.Controller.queue[i];
-    if (item.status === xw.Controller.QUEUE_STATUS_PROCESSED) {
-      xw.Controller.queue.splice(i,1);
-    }
-  }
-};
-
-//
-// Validate that the widgets used in the specified view are all loaded
-//
-xw.Controller.validateWidgets = function(children, invalid) {
-  var i, fqwn;  
-  for (i = 0; i < children.length; i++) {
-     if (children[i] instanceof xw.WidgetNode) {
-       fqwn = children[i].fqwn;
-       if (!xw.Sys.classExists(fqwn)) {         
-         if (!xw.Sys.arrayContains(invalid, fqwn)) {
-           invalid.push(fqwn);
+  },
+  //
+  // Validate that the widgets used in the specified view are all loaded
+  //
+  validateWidgets: function(children, invalid) {
+    var i, fqwn;  
+    for (i = 0; i < children.length; i++) {
+       if (children[i] instanceof xw.WidgetNode) {
+         fqwn = children[i].fqwn;
+         if (!xw.Sys.classExists(fqwn)) {         
+           if (!xw.Sys.arrayContains(invalid, fqwn)) {
+             invalid.push(fqwn);
+           }
          }
        }
-     }
-     if (xw.Sys.isDefined(children[i].children)) {
-       xw.Controller.validateWidgets(children[i].children, invalid);
-     }
-  }
-  return invalid;
-};
-
-//
-// Loads the view definition from the server
-//
-xw.Controller.loadResource = function(resource) {
-  var req = xw.Sys.createHttpRequest("text/xml");
-  req.onreadystatechange = function() { xw.Controller.loadResourceCallback(req, resource) };
-  req.open("GET", resource, true);
-  req.send(null);
-  return req;
-};
-
-xw.Controller.loadResourceCallback = function(req, resource) {
-  if (req.readyState === 4) {
-    if (req.status === 200 || req.status === 0) {
-      var rootNode;
-      if (req.responseXml) rootNode = req.responseXML.documentElement;
-      else if (req.responseText && req.responseText.length > 0) {
-        rootNode = xw.Sys.parseXml(req.responseText).documentElement;
-      }
-
-      if (rootNode) {         
-        // Parse the XML resource definition and store it in the resource definition cache
-        xw.Controller.resourceDefs[resource] = new xw.DefinitionParser().parse(rootNode);
-        xw.Controller.processQueue();
-      }
-      else {
-        alert("Resource [" + resource + "] could not be loaded..  If you are attempting to load " +
-              "from the local file system, the security model of some browsers (such as Chrome) " +
-              "might not support this.");
-      }
+       if (xw.Sys.isDefined(children[i].children)) {
+         xw.Controller.validateWidgets(children[i].children, invalid);
+       }
     }
-    else {
-      alert("There was an error when trying to load resource [" + resource + "] - Error code: " + req.status);
-    }
-  };
-};
+    return invalid;
+  },
+  //
+  // Loads the view definition from the server
+  //
+  loadResource: function(resource) {
+    var req = xw.Sys.createHttpRequest("text/xml");
+    req.onreadystatechange = function() { xw.Controller.loadResourceCallback(req, resource) };
+    req.open("GET", resource, true);
+    req.send(null);
+    return req;
+  },
+  loadResourceCallback: function(req, resource) {
+    if (req.readyState === 4) {
+      if (req.status === 200 || req.status === 0) {
+        var rootNode;
+        if (req.responseXml) rootNode = req.responseXML.documentElement;
+        else if (req.responseText && req.responseText.length > 0) {
+          rootNode = xw.Sys.parseXml(req.responseText).documentElement;
+        }
 
-xw.Controller.openView = function(viewName, definition, params, c) {
-  // Determine the container control 
-  var container = ("string" === (typeof c)) ? xw.Sys.getObject(c) : c;
-  
-  if (container == null) {
-    alert("Error opening view - container [" + c + "] not found.");
-    return;
-  } 
-
-  // If the container already contains a view, destroy it
-  for (var i = 0; i < xw.Controller.activeViews.length; i++) {
-    var entry = xw.Controller.activeViews[i];
-    if (entry.container == container) {
-      entry.view.destroy();
-      xw.Controller.activeViews.splice(i, 1);
-      break;
-    }
-  }
-  
-  // If anything else is remaining, clear it
-  xw.Sys.clearChildren(container);
-    
-  var view = new xw.View();
-  view.viewName = viewName;
-  view.params = params;
-  xw.Controller.parseChildren(view, definition.children, view);
-  xw.Controller.activeViews.push({container: container, view: view});
-  view.render(container);
-};
-
-xw.Controller.openDataModule = function(dataModule, definition, params) {
-  var dm = new xw.DataModule();
-  dm.dataModule = dataModule;
-  dm.params = params;
-  xw.Controller.parseChildren(dm, definition.children, dm);
-  xw.Controller.activeDataModules.push(dm);
-  if (typeof dm.open == "function") {
-    dm.open();
-  }
-};
-
-//
-// This recursive function does the work of converting the view definition into
-// actual widget instances
-//
-xw.Controller.parseChildren = function(owner, childNodes, parentWidget) {
-  var i, widget;
-  var widgets = [];
-  for (i = 0; i < childNodes.length; i++) {
-    var c = childNodes[i];
-    if (c instanceof xw.WidgetNode) {
-      
-      // Create an instance of the widget and set its parent and view
-      widget = xw.Sys.newInstance(c.fqwn);
-      widget.setParent(parentWidget);
-      widget.setOwner(owner);      
-      
-      // Set the widget's attributes
-      for (var p in c.attributes) {       
-          xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
-      }
-      
-      widgets.push(widget);
-      
-      // If this node has children, parse them also
-      if (xw.Sys.isDefined(c.children) && c.children.length > 0) {
-        xw.Controller.parseChildren(owner, c.children, widget);
-      }
-    } else if (c instanceof xw.EventNode) {      
-      var action = new xw.Action();
-      action.script = c.script;
-      action.setOwner(owner);      
-      parentWidget[c.type] = action;
-    } else if (c instanceof xw.XHtmlNode) {
-      widget = new xw.XHtml();      
-      widget.setParent(parentWidget);
-      widget.setOwner(owner);
-      widget.tagName = c.tagName;
-      widget.attributes = c.attributes;
-      widgets.push(widget);
-      if (xw.Sys.isDefined(c.children) && c.children.length > 0) {
-        xw.Controller.parseChildren(owner, c.children, widget); 
-      }
-    } else if (c instanceof xw.TextNode) {
-      widget = new xw.Text();
-      widget.setParent(parentWidget);
-      widget.setOwner(owner);      
-      widget.escape = c.escape;
-      
-      // Set the widget's attributes
-      for (var p in c.attributes) { 
-        if (xw.EL.isExpression(c.attributes[p])) {
-          xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+        if (rootNode) {         
+          // Parse the XML resource definition and store it in the resource definition cache
+          xw.Controller.resourceDefs[resource] = new xw.DefinitionParser().parse(rootNode);
+          xw.Controller.processQueue();
+        }
+        else {
+          alert("Resource [" + resource + "] could not be loaded..  If you are attempting to load " +
+                "from the local file system, the security model of some browsers (such as Chrome) " +
+                "might not support this.");
         }
       }
-            
-      widgets.push(widget);
-    }
-  }
+      else {
+        alert("There was an error when trying to load resource [" + resource + "] - Error code: " + req.status);
+      }
+    };
+  },
+  openView: function(viewName, definition, params, c) {
+    // Determine the container control 
+    var container = ("string" === (typeof c)) ? xw.Sys.getObject(c) : c;
     
-  if (widgets.length > 0) {
-    parentWidget.children = widgets;    
+    if (container == null) {
+      alert("Error opening view - container [" + c + "] not found.");
+      return;
+    } 
+
+    // If the container already contains a view, destroy it
+    for (var i = 0; i < xw.Controller.activeViews.length; i++) {
+      var entry = xw.Controller.activeViews[i];
+      if (entry.container == container) {
+        entry.view.destroy();
+        xw.Controller.activeViews.splice(i, 1);
+        break;
+      }
+    }
+    
+    // If anything else is remaining, clear it
+    xw.Sys.clearChildren(container);
+      
+    var view = new xw.View();
+    view.viewName = viewName;
+    view.params = params;
+    xw.Controller.parseChildren(view, definition.children, view);
+    xw.Controller.activeViews.push({container: container, view: view});
+    view.render(container);
+  },
+  openDataModule: function(dataModule, definition, params) {
+    var dm = new xw.DataModule();
+    dm.dataModule = dataModule;
+    dm.params = params;
+    xw.Controller.parseChildren(dm, definition.children, dm);
+    xw.Controller.activeDataModules.push(dm);
+    if (typeof dm.open == "function") {
+      dm.open();
+    }
+  },
+  //
+  // This recursive function does the work of converting the view definition into
+  // actual widget instances
+  //
+  parseChildren: function(owner, childNodes, parentWidget) {
+    var i, widget;
+    var widgets = [];
+    for (i = 0; i < childNodes.length; i++) {
+      var c = childNodes[i];
+      if (c instanceof xw.WidgetNode) {
+        
+        // Create an instance of the widget and set its parent and view
+        widget = xw.Sys.newInstance(c.fqwn);
+        widget.setParent(parentWidget);
+        widget.setOwner(owner);      
+        
+        // Set the widget's attributes
+        for (var p in c.attributes) {       
+            xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+        }
+        
+        widgets.push(widget);
+        
+        // If this node has children, parse them also
+        if (xw.Sys.isDefined(c.children) && c.children.length > 0) {
+          xw.Controller.parseChildren(owner, c.children, widget);
+        }
+      } else if (c instanceof xw.EventNode) {      
+        var action = new xw.Action();
+        action.script = c.script;
+        action.setOwner(owner);      
+        parentWidget[c.type] = action;
+      } else if (c instanceof xw.XHtmlNode) {
+        widget = new xw.XHtml();      
+        widget.setParent(parentWidget);
+        widget.setOwner(owner);
+        widget.tagName = c.tagName;
+        widget.attributes = c.attributes;
+        widgets.push(widget);
+        if (xw.Sys.isDefined(c.children) && c.children.length > 0) {
+          xw.Controller.parseChildren(owner, c.children, widget); 
+        }
+      } else if (c instanceof xw.TextNode) {
+        widget = new xw.Text();
+        widget.setParent(parentWidget);
+        widget.setOwner(owner);      
+        widget.escape = c.escape;
+        
+        // Set the widget's attributes
+        for (var p in c.attributes) { 
+          if (xw.EL.isExpression(c.attributes[p])) {
+            xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+          }
+        }
+              
+        widgets.push(widget);
+      }
+    }
+      
+    if (widgets.length > 0) {
+      parentWidget.children = widgets;    
+    }
   }
 };
 
 //
 // This class is responsible for loading the source code for widgets that have not been loaded already
 //
-xw.WidgetManager = {};
-
-xw.WidgetManager.WS_QUEUED = "QUEUED";
-xw.WidgetManager.WS_LOADING = "LOADING";
-xw.WidgetManager.WS_LOADED = "LOADED";
-xw.WidgetManager.WS_FAILED = "FAILED";
-
-//
-// Stores the current widget load state
-//
-xw.WidgetManager.widgetState = {};
-
-xw.WidgetManager.getWidgetState = function(fqwn) {
-  return xw.WidgetManager.widgetState[fqwn];
-};
-
-xw.WidgetManager.setWidgetState = function(fqwn, state) {
-  xw.WidgetManager.widgetState[fqwn] = state;
-};
-
-//
-// Load the widgets specified in the widgets array parameter, then open the specified view in
-// the specified container 
-//
-xw.WidgetManager.loadWidgets = function(widgets) {
-  var i;
-  var wm = xw.WidgetManager;
-  
-  var queued = false;
-  
-  for (i = 0; i < widgets.length; i++) {
-    if (xw.Sys.isUndefined(wm.getWidgetState(widgets[i]))) {
-      wm.setWidgetState(widgets[i], wm.WS_QUEUED);
-      queued = true;
-    } 
-  }
-  
-  // If there are any queued widgets that have not yet been loaded, load them
-  // otherwise pass control back to the controller
-  if (queued) {
-    wm.loadQueuedWidgets();
-  } else {
+xw.WidgetManager = {
+  WS_QUEUED: "QUEUED",
+  WS_LOADING: "LOADING",
+  WS_LOADED: "LOADED",
+  WS_FAILED: "FAILED",
+  //
+  // Stores the current widget load state
+  //
+  widgetState: {},
+  getWidgetState: function(fqwn) {
+    return xw.WidgetManager.widgetState[fqwn];
+  },
+  setWidgetState: function(fqwn, state) {
+    xw.WidgetManager.widgetState[fqwn] = state;
+  },
+  //
+  // Load the widgets specified in the widgets array parameter, then open the specified view in
+  // the specified container 
+  //
+  loadWidgets: function(widgets) {
+    var i;
+    var wm = xw.WidgetManager;
+    
+    var queued = false;
+    
+    for (i = 0; i < widgets.length; i++) {
+      if (xw.Sys.isUndefined(wm.getWidgetState(widgets[i]))) {
+        wm.setWidgetState(widgets[i], wm.WS_QUEUED);
+        queued = true;
+      } 
+    }
+    
+    // If there are any queued widgets that have not yet been loaded, load them
+    // otherwise pass control back to the controller
+    if (queued) {
+      wm.loadQueuedWidgets();
+    } else {
+      xw.Controller.processQueue();
+    }
+  },
+  loadQueuedWidgets: function() {
+    var wm = xw.WidgetManager;
+    
+    for (var fqwn in wm.widgetState) {
+      var state = wm.getWidgetState(fqwn);
+      
+      if (state === wm.WS_QUEUED) {
+        // Last check to see if the class exists before we try loading it
+        if (!xw.Sys.classExists(fqwn)) {
+          // Set the widget state to LOADING
+          wm.setWidgetState(fqwn, wm.WS_LOADING);
+          
+          // Define callback methods for success and failure
+          var successCallback = function() {
+            wm.setWidgetState(fqwn, wm.WS_LOADED);
+            wm.loadQueuedWidgets();
+          };
+          
+          var failureCallback = function() {
+            wm.setWidgetState(fqwn, wm.WS_FAILED);
+            wm.loadQueuedWidgets();
+          };
+          
+          var url = xw.Sys.getBasePath() + fqwn.replace(/\./g, "/").toLowerCase() + ".js";    
+          xw.Sys.loadSource(url, successCallback, failureCallback);
+          return;      
+        } else {
+          wm.setWidgetState(fqwn, wm.WS_LOADED);
+        }
+      }  
+    }
     xw.Controller.processQueue();
   }
-};
-
-xw.WidgetManager.loadQueuedWidgets = function() {
-  var wm = xw.WidgetManager;
-  
-  for (var fqwn in wm.widgetState) {
-    var state = wm.getWidgetState(fqwn);
-    
-    if (state === wm.WS_QUEUED) {
-      // Last check to see if the class exists before we try loading it
-      if (!xw.Sys.classExists(fqwn)) {
-        // Set the widget state to LOADING
-        wm.setWidgetState(fqwn, wm.WS_LOADING);
-        
-        // Define callback methods for success and failure
-        var successCallback = function() {
-          wm.setWidgetState(fqwn, wm.WS_LOADED);
-          wm.loadQueuedWidgets();
-        };
-        
-        var failureCallback = function() {
-          wm.setWidgetState(fqwn, wm.WS_FAILED);
-          wm.loadQueuedWidgets();
-        };
-        
-        var url = xw.Sys.getBasePath() + fqwn.replace(/\./g, "/").toLowerCase() + ".js";    
-        xw.Sys.loadSource(url, successCallback, failureCallback);
-        return;      
-      } else {
-        wm.setWidgetState(fqwn, wm.WS_LOADED);
-      }
-    }  
-  }
-    
-  xw.Controller.processQueue();
 };
   
 //
@@ -1514,47 +1496,59 @@ xw.Bounds = function(top, left, height, width) {
 
 xw.Action = function() {
   this.script = null;
+  this.f = undefined;
 };
 
-xw.Action.prototype.invoke = function() {
+xw.Action.prototype.invoke = function(callee) {
   if (xw.Sys.isDefined(this.script)) {
-    // The script must have access to named widgets (widgets with an id)
-    // to do this, we inject some additional lines into the front of the 
-    // script.
-  
-    var __script = "{";
+    if (xw.Sys.isUndefined(this.f)) {
+      this.f = function() {
+        // The script must have access to named widgets (widgets with an id)
+        // to do this, we inject some additional lines into the front of the 
+        // script.
+        var __script = "{";
 
-    // local variable, visible to our evaluated script -
-    // required to set up script variables     
-    var __registered = {};
-    
-    // local variable, visible to our evaluated script -
-    // makes the view or data module params available
-    var params = this.getOwner().params;
-    
-    // register variables for all widgets within the same view/data module with an id
-    for (var id in this.getOwner()._registeredWidgets) {
-      __registered[id] = this.getOwner()._registeredWidgets[id];
-      __script += "var " + id + " = __registered[\"" + id + "\"];";
-    }
-
-    // register variables for all widgets with an id from any data modules, if there
-    // is no local overriding variable
-    for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
-      var dm = xw.Controller.activeDataModules[i];
-            
-      for (var id in dm._registeredWidgets) {
-        if (xw.Sys.isUndefined(__registered[id])) {
-          __registered[id] = dm._registeredWidgets[id];
+        // local variable, visible to our evaluated script -
+        // required to set up script variables     
+        var __registered = {};
+        
+        // local variable, visible to our evaluated script -
+        // makes the view or data module params available
+        var params = this.getOwner().params;
+        
+        // register variables for all widgets within the same view/data module with an id
+        for (var id in this.getOwner()._registeredWidgets) {
+          __registered[id] = this.getOwner()._registeredWidgets[id];
           __script += "var " + id + " = __registered[\"" + id + "\"];";
         }
-      }    
-    }
-       
-    __script += this.script;
-    __script += "}";    
+
+        // register variables for all widgets with an id from any data modules, if there
+        // is no local overriding variable
+        for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
+          var dm = xw.Controller.activeDataModules[i];
+                
+          for (var id in dm._registeredWidgets) {
+            if (xw.Sys.isUndefined(__registered[id])) {
+              __registered[id] = dm._registeredWidgets[id];
+              __script += "var " + id + " = __registered[\"" + id + "\"];";
+            }
+          }    
+        }
+           
+        __script += this.script;
+        __script += "}";
+        return new Function(__script);
+      }();
+    }  
     
-    return eval(__script);
+    if (typeof this.f == "function") {
+      if (arguments.length > 1) {
+        var args = Array.prototype.slice.call(arguments, 1, arguments.length);
+        return this.f.apply(callee, args);
+      } else {
+        return this.f.apply(callee);    
+      }
+    }    
   }
 };
 
