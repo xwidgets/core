@@ -225,6 +225,13 @@ xw.Sys = {
   trim: function(value) {
     return value.replace(/^\s+|\s+$/g,"");
   },
+  objectSize: function(value) {
+    var size = 0, key;
+    for (key in value) {
+      if (value.hasOwnProperty(key)) size++;
+    }
+    return size;
+  },
   capitalize: function(value) {
     return value.substring(0, 1).toUpperCase() + value.substring(1, value.length);
   },
@@ -1058,9 +1065,6 @@ xw.Controller = {
           item.status = xw.Controller.QUEUE_STATUS_DEFINITION_LOADED;    
         } else if (item.status === xw.Controller.QUEUE_STATUS_UNPROCESSED) {
           // Otherwise load the resource
-          
-          // FIXME we should really double check that the resource isn't being loaded elsewhere, 
-          // like another queue item (however unlikely that might be)
           item.status = xw.Controller.QUEUE_STATUS_DEFINITION_LOADING;
           xw.Controller.loadResource(item.resource);
         }    
@@ -1068,14 +1072,14 @@ xw.Controller = {
       
       if (item.status === xw.Controller.QUEUE_STATUS_DEFINITION_LOADED) {
         // Validate all of the widgets used by the resource    
-        var invalid = xw.Controller.validateWidgets(xw.Controller.resourceDefs[item.resource].children, []);
-        if (invalid.length > 0) {
+        var invalid = xw.Controller.validateWidgets(null, xw.Controller.resourceDefs[item.resource].children, {});
+        if (xw.Sys.objectSize(invalid) > 0) {
           // If there are invalid widgets, load them
           item.status = xw.Controller.QUEUE_STATUS_WIDGETS_LOADING;
           item.invalid = invalid;
           
-          for (var j = 0; j < invalid.length; j++) {
-            if (xw.WidgetManager.getWidgetState(invalid[j]) === xw.WidgetManager.WS_FAILED) {
+          for (var fqwn in invalid) {
+            if (xw.WidgetManager.getWidgetState(fqwn) === xw.WidgetManager.WS_FAILED) {
               item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
               alert("Could not open resource [" + item.resource + "], as widget [" + invalid[j] + "] failed to load.");
               break;
@@ -1092,11 +1096,11 @@ xw.Controller = {
         // Check if the widgets are loaded
         var loaded = true;
         
-        for (var j = 0; j < item.invalid.length; j++) {
-          var state = xw.WidgetManager.getWidgetState(item.invalid[j]);
+        for (var fqwn in item.invalid) {
+          var state = xw.WidgetManager.getWidgetState(fqwn);
           if (state === xw.WidgetManager.WS_FAILED) {
             item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
-            alert("Could not open resource [" + item.resource + "], as widget [" + item.invalid[j] + "] failed to load.");
+            alert("Could not open resource [" + item.resource + "], as widget [" + fqwn + "] failed to load.");
             break;
           } else if (state !== xw.WidgetManager.WS_LOADED) {
             loaded = false;
@@ -1134,19 +1138,24 @@ xw.Controller = {
   //
   // Validate that the widgets used in the specified view are all loaded
   //
-  validateWidgets: function(children, invalid) {
+  validateWidgets: function(parent, children, invalid) {
     var i, fqwn;  
     for (i = 0; i < children.length; i++) {
        if (children[i] instanceof xw.WidgetNode) {
-         fqwn = children[i].fqwn;
-         if (!xw.Sys.classExists(fqwn)) {         
-           if (!xw.Sys.arrayContains(invalid, fqwn)) {
-             invalid.push(fqwn);
+         fqwn = children[i].fqwn;         
+         if (!xw.Sys.classExists(fqwn)) {
+           if (xw.Sys.isUndefined(invalid[fqwn])) {
+             invalid[fqwn] = {parents:[]};
+           }
+         
+           if (parent != null && xw.Sys.isDefined(parent.fqwn) && 
+               !xw.Sys.arrayContains(invalid[fqwn].parents, parent.fqwn)) {
+             invalid[fqwn].parents.push(parent.fqwn);
            }
          }
        }
        if (xw.Sys.isDefined(children[i].children)) {
-         xw.Controller.validateWidgets(children[i].children, invalid);
+         xw.Controller.validateWidgets(children[i], children[i].children, invalid);
        }
     }
     return invalid;
@@ -1295,6 +1304,7 @@ xw.Controller = {
 //
 xw.WidgetManager = {
   WS_QUEUED: "QUEUED",
+//  WS_WAITING: "WAITING",
   WS_LOADING: "LOADING",
   WS_LOADED: "LOADED",
   WS_FAILED: "FAILED",
@@ -1305,8 +1315,11 @@ xw.WidgetManager = {
   getWidgetState: function(fqwn) {
     return xw.WidgetManager.widgetState[fqwn];
   },
+  initWidgetState: function(fqwn, parents, state) {
+    xw.WidgetManager.widgetState[fqwn] = {state: state, parents: parents};  
+  },
   setWidgetState: function(fqwn, state) {
-    xw.WidgetManager.widgetState[fqwn] = state;
+    xw.WidgetManager.widgetState[fqwn].state = state;
   },
   //
   // Load the widgets specified in the widgets array parameter, then open the specified view in
@@ -1318,11 +1331,11 @@ xw.WidgetManager = {
     
     var queued = false;
     
-    for (i = 0; i < widgets.length; i++) {
-      if (xw.Sys.isUndefined(wm.getWidgetState(widgets[i]))) {
-        wm.setWidgetState(widgets[i], wm.WS_QUEUED);
+    for (var fqwn in widgets) {
+      if (xw.Sys.isUndefined(wm.getWidgetState(fqwn))) {
+        wm.initWidgetState(fqwn, widgets[fqwn].parents, wm.WS_QUEUED);
         queued = true;
-      } 
+      }     
     }
     
     // If there are any queued widgets that have not yet been loaded, load them
@@ -1335,13 +1348,20 @@ xw.WidgetManager = {
   },
   loadQueuedWidgets: function() {
     var wm = xw.WidgetManager;
-    
+    outer:
     for (var fqwn in wm.widgetState) {
-      var state = wm.getWidgetState(fqwn);
-      
+      var state = wm.getWidgetState(fqwn).state;
+      var parents = wm.getWidgetState(fqwn).parents;
+
       if (state === wm.WS_QUEUED) {
         // Last check to see if the class exists before we try loading it
-        if (!xw.Sys.classExists(fqwn)) {
+        if (!xw.Sys.classExists(fqwn)) {        
+          for (var i = 0; i < parents.length; i++) {
+            if (!xw.Sys.classExists(parents[i])) {
+              break outer;
+            }
+          }
+        
           // Set the widget state to LOADING
           wm.setWidgetState(fqwn, wm.WS_LOADING);
           
