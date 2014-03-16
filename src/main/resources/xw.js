@@ -1081,8 +1081,7 @@ xw.Controller = {
           for (var fqwn in invalid) {
             if (xw.WidgetManager.getWidgetState(fqwn) === xw.WidgetManager.WS_FAILED) {
               item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
-              alert("Could not open resource [" + item.resource + "], as widget [" + invalid[j] + "] failed to load.");
-              break;
+              throw "Could not open resource [" + item.resource + "], widget [" + invalid[j] + "] failed to load.";
             }        
           }      
           
@@ -1100,8 +1099,7 @@ xw.Controller = {
           var state = xw.WidgetManager.getWidgetState(fqwn);
           if (state === xw.WidgetManager.WS_FAILED) {
             item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
-            alert("Could not open resource [" + item.resource + "], as widget [" + fqwn + "] failed to load.");
-            break;
+            throw "Could not open resource [" + item.resource + "], widget [" + fqwn + "] failed to load.";
           } else if (state !== xw.WidgetManager.WS_LOADED) {
             loaded = false;
             break;
@@ -1185,13 +1183,13 @@ xw.Controller = {
           xw.Controller.processQueue();
         }
         else {
-          alert("Resource [" + resource + "] could not be loaded..  If you are attempting to load " +
+          throw "Resource [" + resource + "] could not be loaded..  If you are attempting to load " +
                 "from the local file system, the security model of some browsers (such as Chrome) " +
-                "might not support this.");
+                "might not support this.";
         }
       }
       else {
-        alert("There was an error when trying to load resource [" + resource + "] - Error code: " + req.status);
+        throw "There was an error when trying to load resource [" + resource + "] - Error code: " + req.status;
       }
     };
   },
@@ -1200,7 +1198,7 @@ xw.Controller = {
     var container = ("string" === (typeof c)) ? xw.Sys.getObject(c) : c;
     
     if (container == null) {
-      alert("Error opening view - container [" + c + "] not found.");
+      throw "Error opening view - container [" + c + "] not found.";
       return;
     } 
 
@@ -1309,17 +1307,22 @@ xw.WidgetManager = {
   WS_LOADED: "LOADED",
   WS_FAILED: "FAILED",
   //
-  // Stores the current widget load state
+  // Tracks the state of the widgets being loaded
   //
-  widgetState: {},
+  widgets: {},
   getWidgetState: function(fqwn) {
-    return xw.WidgetManager.widgetState[fqwn];
+    return xw.Sys.isDefined(xw.WidgetManager.widgets[fqwn]) ?
+      xw.WidgetManager.widgets[fqwn].state : undefined;
   },
-  initWidgetState: function(fqwn, parents, state) {
-    xw.WidgetManager.widgetState[fqwn] = {state: state, parents: parents};  
+  getWidgetParents: function(fqwn) {
+    return xw.Sys.isDefined(xw.WidgetManager.widgets[fqwn]) ?
+      xw.WidgetManager.widgets[fqwn].parents : undefined;  
+  },
+  initWidget: function(fqwn, parents, state) {
+    xw.WidgetManager.widgets[fqwn] = {state: state, parents: parents};  
   },
   setWidgetState: function(fqwn, state) {
-    xw.WidgetManager.widgetState[fqwn].state = state;
+    xw.WidgetManager.widgets[fqwn].state = state;
   },
   //
   // Load the widgets specified in the widgets array parameter, then open the specified view in
@@ -1333,7 +1336,7 @@ xw.WidgetManager = {
     
     for (var fqwn in widgets) {
       if (xw.Sys.isUndefined(wm.getWidgetState(fqwn))) {
-        wm.initWidgetState(fqwn, widgets[fqwn].parents, wm.WS_QUEUED);
+        wm.initWidget(fqwn, widgets[fqwn].parents, wm.WS_QUEUED);
         queued = true;
       }     
     }
@@ -1349,9 +1352,9 @@ xw.WidgetManager = {
   loadQueuedWidgets: function() {
     var wm = xw.WidgetManager;
     outer:
-    for (var fqwn in wm.widgetState) {
-      var state = wm.getWidgetState(fqwn).state;
-      var parents = wm.getWidgetState(fqwn).parents;
+    for (var fqwn in wm.widgets) {
+      var state = wm.getWidgetState(fqwn);
+      var parents = wm.getWidgetParents(fqwn);
 
       if (state === wm.WS_QUEUED) {
         // Last check to see if the class exists before we try loading it
