@@ -1519,59 +1519,55 @@ xw.Bounds = function(top, left, height, width) {
 
 xw.Action = function() {
   this.script = null;
-  this.f = undefined;
 };
 
-xw.Action.prototype.invoke = function(callee) {
-  if (xw.Sys.isDefined(this.script)) {
-    if (xw.Sys.isUndefined(this.f)) {
-      this.f = function() {
-        // The script must have access to named widgets (widgets with an id)
-        // to do this, we inject some additional lines into the front of the 
-        // script.
-        var __script = "{";
-
-        // local variable, visible to our evaluated script -
-        // required to set up script variables     
-        var __registered = {};
-        
-        // local variable, visible to our evaluated script -
-        // makes the view or data module params available
-        var params = this.getOwner().params;
-        
-        // register variables for all widgets within the same view/data module with an id
-        for (var id in this.getOwner()._registeredWidgets) {
-          __registered[id] = this.getOwner()._registeredWidgets[id];
-          __script += "var " + id + " = __registered[\"" + id + "\"];";
-        }
-
-        // register variables for all widgets with an id from any data modules, if there
-        // is no local overriding variable
-        for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
-          var dm = xw.Controller.activeDataModules[i];
-                
-          for (var id in dm._registeredWidgets) {
-            if (xw.Sys.isUndefined(__registered[id])) {
-              __registered[id] = dm._registeredWidgets[id];
-              __script += "var " + id + " = __registered[\"" + id + "\"];";
-            }
-          }    
-        }
-           
-        __script += this.script;
-        __script += "}";
-        return new Function(__script);
-      }();
-    }  
+xw.Action.prototype.invoke = function(callee, args) {
+  if (xw.Sys.isDefined(this.script)) {     
+    // local variable, required to set up script variables     
+    var __registered = {};
     
-    if (typeof this.f == "function") {
-      if (arguments.length > 1) {
-        var args = Array.prototype.slice.call(arguments, 1, arguments.length);
-        return this.f.apply(callee, args);
-      } else {
-        return this.f.apply(callee);    
-      }
-    }    
+    // local variable, visible to our evaluated script -
+    // makes the view or data module params available
+    var params = this.getOwner().params;
+    
+    // register variables for all widgets within the same view/data module with an id
+    for (var id in this.getOwner()._registeredWidgets) {
+      __registered[id] = this.getOwner()._registeredWidgets[id];
+    }
+
+    // register variables for all widgets with an id from any data modules, if there
+    // is no local overriding variable
+    for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
+      var dm = xw.Controller.activeDataModules[i];           
+      for (var id in dm._registeredWidgets) {
+        if (xw.Sys.isUndefined(__registered[id])) {
+          __registered[id] = dm._registeredWidgets[id];
+        }
+      }    
+    }
+    
+    // The script must have access to named widgets (widgets with an id)
+    // to do this, we inject some additional lines into the front of the 
+    // script.
+    var __script = "{";
+
+    for (var id in __registered) {
+      __script += "  var " + id + " = __registered[\"" + id + "\"];";
+    }
+           
+    __script += this.script;
+    __script += "}";
+    
+    var argNames = ["__registered", "params"];
+    // The actual argument array which will be passed to the function call
+    var a = [__registered, params];
+    
+    for (var arg in args) {
+      argNames.push(arg);
+      a.push(args[arg]);
+    }
+    
+    return new Function(argNames, __script).apply(callee, a);
   }
 };
 
