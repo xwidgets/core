@@ -7,10 +7,41 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     this.registerProperty("rendered");
     this.registerProperty("styleClass", {default: "xw_menuitem"});
     this.registerProperty("submenuStyleClass", {default: "xw_submenu"});
+    this.registerProperty("definition", {elListener: this.updateDefinition});
     this.registerEvent("onclick");
     this.control = null;
     this.submenuContainer = null;
     this.submenuOpen = false;
+  },
+  updateDefinition: function(def) {
+    // If the submenu is open, close it
+    if (this.submenuOpen) {
+      this.submenuContainer.style.display = "none";
+      this.submenuOpen = false;
+    }
+    // Clear all the current children - TODO move this to the base Widget class
+    if (xw.Sys.isDefined(this.childen)) {
+      for (var i = 0; i < this.children.length; i++) {
+        this.children[i].destroy();
+      }
+    }
+  
+    this.children = this.parseDefinition(def, this);
+  },
+  parseDefinition: function(nodes, parent) {
+    var items = [];
+    for (var node in nodes) {
+      var mi = new org.xwidgets.core.MenuItem(nodes[node].label);
+      mi.setParent(parent);    
+      
+      if (nodes[node].children) {
+        mi.children = this.parseDefinition(nodes[node].children, mi);
+      }
+      
+      items.push(mi);
+    }
+    
+    return items;
   },
   render: function(container) {
     if (this.control == null) {
@@ -56,14 +87,8 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
         
         c.style.position = "absolute";
         c.style.zIndex = 10;
-        //c.style.width = (xw.Sys.isUndefined(width) ? "400px" : width + "px");
-        //c.style.height = (xw.Sys.isUndefined(height) ? "400px" : height + "px");
         
         var rect = this.control.getBoundingClientRect();        
-        
-//        c.style.right = "0px";
-//        c.style.width = "400px";
-//        c.style.height = "400px";
 
         c.style.top = (rect.bottom + 1) + "px";  
         c.style.left = rect.left + "px";

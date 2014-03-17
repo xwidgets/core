@@ -564,7 +564,7 @@ xw.EL = {
         if (binding.propertyName) {
           xw.Sys.setObjectProperty(binding.widget, binding.propertyName, binding.value);    
         } else if (binding.callback) {
-          binding.callback(binding.value);
+          binding.callback.apply(binding.widget, [binding.value]);
         }
       }
     }
