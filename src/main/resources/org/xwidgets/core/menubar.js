@@ -19,12 +19,16 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
       this.unselect();
     }
     // Clear all the current children - TODO move this to the base Widget class
-    if (xw.Sys.isDefined(this.childen)) {
+    if (xw.Sys.isDefined(this.children)) {
       for (var i = 0; i < this.children.length; i++) {
         this.children[i].destroy();
       }
     }
   
+    if (this.submenuContainer) {
+      this.submenuContainer.parentNode.removeChild(this.submenuContainer);
+      this.submenuContainer = null;
+    }
     this.children = this.parseDefinition(def, this);    
   },
   parseDefinition: function(nodes, parent) {
@@ -79,6 +83,16 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
         }
         xw.Sys.chainEvent(this.control, "mouseover", mouseOverEvent);
       }
+    }
+  },
+  destroy: function() {
+    if (this.submenuContainer) {
+      this.submenuContainer.parentNode.removeChild(this.submenuContainer);
+      this.submenuContainer = null;
+    }
+    if (this.control) {
+      this.control.parentNode.removeChild(this.control);
+      this.control = null;
     }
   },
   click: function(event) {
