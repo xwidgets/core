@@ -9,7 +9,6 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
   },
   invoke: function() {
     var cb = this.callback ? this.callback : function() {};
-    xw.Log.info("Sending AJAX request to [" + this.url + "]");
     xw.Ajax.get(this.url, function(response) { cb(response); });  
   },
   toString: function() {
