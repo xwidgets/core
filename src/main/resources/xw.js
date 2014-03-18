@@ -373,28 +373,24 @@ xw.Sys = {
 //
 
 xw.Log = {
-  logWindow: null,
-  messages: [],
-  scrollback: 1000,
   levels: {
+    ALL: 0,
     DEBUG: 100,
     INFO: 200,
     WARN: 300,
-    ERROR: 400
+    ERROR: 400,
+    OFF: 500
   },
-  logLevel: "INFO",
+  logLevel: "OFF",
   append: function(text, logLevel) {
     var msg = {
       text : text,
       logLevel : logLevel,
       timestamp : new Date()
     };
-    if (xw.Log.levels[logLevel] <= xw.Log.levels[xw.Log.logLevel]) {
-      xw.Log.messages.push(msg);
-      while (xw.Log.messages.length > xw.Log.scrollback) {
-        xw.Log.messages.splice(0,1);
-      }
-      xw.Log.appendToWindow(msg); 
+    if (xw.Log.levels[logLevel] >= xw.Log.levels[xw.Log.logLevel]) {
+      var formattedMsg = xw.Log.format(msg);
+      console.log(formattedMsg);
     }
   },
   debug: function(text) {
@@ -409,29 +405,22 @@ xw.Log = {
   error: function(text) {
     xw.Log.append(text, "ERROR");
   },
-  appendToWindow: function(msg) {
-    if (xw.Log.logWindow) {
-      var formattedTime = msg.timestamp.getHours() + ":" + msg.timestamp.getMinutes() + ":" + msg.timestamp.getSeconds();
-      xw.Log.logWindow.document.write("<pre>" + formattedTime + " [" + msg.logLevel + "] " +
-        msg.text.replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;") +
-        "</pre><br/>");
+  format: function(msg) {
+    var hours = msg.timestamp.getHours().toString();
+    var minutes = msg.timestamp.getMinutes().toString();
+    var seconds = msg.timestamp.getSeconds().toString();
+    if (hours.length < 2) {
+      hours = "0" + hours;
     }
-  },
-  display: function() {
-    var attr = "left=400,top=400,resizable=yes,scrollbars=yes,width=400,height=400";
-    xw.Log.logWindow = window.open("", "__xwidgetsDebugWindow", attr);
-    if (xw.Log.logWindow) {
-      xw.Log.logWindow.document.write("<html><head><title>XWidgets Log Window</title></head><body></body></html>");
-      var t = xw.Log.logWindow.document.getElementsByTagName("body").item(0);
-      t.style.fontFamily = "arial";
-      t.style.fontSize = "8pt";
-      
-      for (var i = 0; i < xw.Log.messages.length; i++) {
-        xw.Log.appendToWindow(xw.Log.messages[i]);
-      }
+    if (minutes.length < 2) {
+      minutes = "0" + minutes;
     }
+    if (seconds.length < 2) {
+      seconds = "0" + seconds;
+    }
+    var formattedTime = hours + ":" + minutes + ":" + seconds;
+    var formattedMsg = formattedTime + " [" + msg.logLevel + "] " + msg.text;
+    return formattedMsg;
   }
 };
 
