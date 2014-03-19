@@ -2091,3 +2091,40 @@ xw.Popup = {
 xw.open = function(viewName, params, container) {
   xw.Controller.open(viewName, params, container);
 };
+
+// Walks through the DOM and scans for any view or datamodule nodes that should be opened
+xw.scanDocument = function() {
+  var xwNodes = [];
+
+  var scanDOM = function(node) {
+    if (node && (node.nodeName.toUpperCase() == "XW:VIEW" ||
+        node.nodeName.toUpperCase() == "XW:DATAMODULE")) {
+      xwNodes.push(node);   
+    }
+  
+    node = node.firstChild;
+    
+    while (node) {
+      scanDOM(node);
+      node = node.nextSibling;
+    }  
+  };
+  
+  scanDOM(document.body);
+  
+  for (var i = 0; i < xwNodes.length; i++) {
+    // TODO implement params support
+    xw.Controller.open(xwNodes[i].attributes.getNamedItem("name").value, null, xwNodes[i].parentNode);
+  }
+};
+
+xw.ready = function() {
+  document.removeEventListener("DOMContentLoaded", xw.ready, false);
+  window.removeEventListener("load", xw.ready, false);
+  xw.scanDocument();
+};
+
+new function() {
+  document.addEventListener("DOMContentLoaded", xw.ready, false);
+  window.addEventListener("load", xw.ready, false);
+}();

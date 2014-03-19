@@ -190,6 +190,11 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
   },
   trackMouseOver: function(menuItem) {
     if (menuItem != this.mouseOverItem) {
+      // Unselect the currently selected item
+      if (this.mouseOverItem != null) {
+        this.mouseOverItem.unselect();
+      }
+    
       // Clear the existing timeout function if it's set
       if (this.mouseOverTimeout) {
         clearTimeout(this.mouseOverTimeout);
