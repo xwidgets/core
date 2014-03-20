@@ -91,6 +91,16 @@ xw.Sys = {
       return null;
     }
   },
+  getWidget: function(id) {
+    for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
+      var dm = xw.Controller.activeDataModules[i];
+      var w = dm._registeredWidgets[id];
+      if (xw.Sys.isDefined(w)) {
+        return w;
+      }
+    }
+    return undefined;
+  },
   createHttpRequest: function(mimeType) {
     if (window.XMLHttpRequest) {
       var req = new XMLHttpRequest();
@@ -1384,7 +1394,7 @@ xw.BorderLayout = function() {
     }
 
     for (i = 0; i < controls.client.length; i++) {
-      this.bounds.put(controls.client[i], new xw.Bounds(null, null, null, null)
+      this.bounds[controls.client[i]] = new xw.Bounds(null, null, null, null)
         .addStyleProperty("position", "absolute")
         .addStyleProperty("left", spacing.left + "px")
         .addStyleProperty("right", spacing.right + "px")
