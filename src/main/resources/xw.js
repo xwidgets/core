@@ -771,79 +771,6 @@ xw.Ajax = {
   }
 };
 
-//
-// A Map implementation
-//
-xw.Map = function() {
-  this.elements = [];
-
-  xw.Map.prototype.size = function() {
-    return this.elements.length;
-  };
-
-  xw.Map.prototype.isEmpty = function() {
-    return this.elements.length === 0;
-  };
-
-  xw.Map.prototype.keySet = function() {
-    var i;
-    var keySet = [];
-    for (i = 0; i < this.elements.length; i++) {
-      keySet.push(this.elements[i].key);
-    }
-    return keySet;
-  };
-
-  xw.Map.prototype.values = function() {
-    var i;
-    var values = [];
-    for (i = 0; i < this.elements.length; i++) {
-      values.push(this.elements[i].value);
-    }
-    return values;
-  };
-
-  xw.Map.prototype.get = function(key) {
-    var i;
-    for (i = 0; i < this.elements.length; i++) {
-      if (this.elements[i].key === key) {
-        return this.elements[i].value;
-      }
-    }
-    return null;
-  };
-
-  xw.Map.prototype.put = function(key, value) {
-    var i;
-    for (i = 0; i < this.elements.length; i++) {
-      if (this.elements[i].key === key) {
-        this.elements[i].value = value;
-        return;
-      }
-    }
-    this.elements.push({key:key,value:value});
-  };
-
-  xw.Map.prototype.remove = function(key) {
-    var i;
-    for (i = 0; i < this.elements.length; i++) {
-      if (this.elements[i].key === key) {
-        this.elements.splice(i, 1);
-      }
-    }
-  };
-
-  xw.Map.prototype.contains = function(key) {
-    var i;
-    for (i = 0; i < this.elements.length; i++) {
-      if (this.elements[i].key === key) {
-        return true;
-      }
-    }
-    return false;
-  };
-};
-
 xw.ViewNode = function(children) {
   this.children = children;
 };
@@ -1385,7 +1312,7 @@ xw.WidgetManager = {
 //
 
 xw.BorderLayout = function() {
-  this.bounds = new xw.Map();
+  this.bounds = {};
 
   xw.BorderLayout.prototype.calculateLayout = function(widgets) {
     var i;
@@ -1423,7 +1350,7 @@ xw.BorderLayout = function() {
         .addStyleProperty("left", "0")
         .addStyleProperty("right", "0");
 
-      this.bounds.put(controls.top[i], bounds);
+      this.bounds[controls.top[i]] = bounds;
       spacing.top += 1.0 * controls.top[i].height;
     }
 
@@ -1434,27 +1361,25 @@ xw.BorderLayout = function() {
         .addStyleProperty("left", "0")
         .addStyleProperty("right", "0");
 
-      this.bounds.put(controls.bottom[i], bounds);
+      this.bounds[controls.bottom[i]] = bounds;
       spacing.bottom += 1.0 * controls.bottom[i].height;
     }
 
     for (i = 0; i < controls.left.length; i++) {
-      this.bounds.put(controls.left[i], new xw.Bounds(null, null, null, controls.left[i].width)
+      this.bounds[controls.left[i]] = new xw.Bounds(null, null, null, controls.left[i].width)
         .addStyleProperty("position", "absolute")
         .addStyleProperty("left", spacing.left + "px")
         .addStyleProperty("top", spacing.top + "px")
-        .addStyleProperty("bottom", spacing.bottom + "px")
-      );
+        .addStyleProperty("bottom", spacing.bottom + "px");
       spacing.left += 1.0 * controls.left[i].width;
     }
 
     for (i = 0; i < controls.right.length; i++) {
-      this.bounds.put(controls.right[i], new xw.Bounds(null, null, null, controls.right[i].width)
+      this.bounds[controls.right[i]] = new xw.Bounds(null, null, null, controls.right[i].width)
         .addStyleProperty("position", "absolute")
         .addStyleProperty("right", spacing.right + "px")
         .addStyleProperty("top", spacing.top + "px")
-        .addStyleProperty("bottom", spacing.bottom + "px")
-      );
+        .addStyleProperty("bottom", spacing.bottom + "px");
       spacing.right += 1.0 * controls.right[i].width;
     }
 
@@ -1464,13 +1389,12 @@ xw.BorderLayout = function() {
         .addStyleProperty("left", spacing.left + "px")
         .addStyleProperty("right", spacing.right + "px")
         .addStyleProperty("top", spacing.top + "px")
-        .addStyleProperty("bottom", spacing.bottom + "px")
-      );
+        .addStyleProperty("bottom", spacing.bottom + "px");
     }
   };
 
   xw.BorderLayout.prototype.getBounds = function(ctl) {
-    return this.bounds.get(ctl);
+    return this.bounds[ctl];
   };
 };
 
