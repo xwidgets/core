@@ -8,16 +8,13 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     this.registerProperty("styleClass", {default: "xw_menuitem"});
     this.registerProperty("selectedStyleClass", {default: "xw_menuitem_selected"});
     this.registerProperty("submenuStyleClass", {default: "xw_submenu"});
-    this.registerProperty("definition", {elListener: this.updateDefinition});
+    this.registerProperty("definition");
+    this.registerPropertyChangeListener("definition", this.updateDefinition);
     this.registerEvent("onclick");
     this.control = null;
     this.submenuContainer = null;
   },
   updateDefinition: function(def) {
-    // If the submenu is open, close it
-    if (this.submenuOpen) {
-      this.unselect();
-    }
     // Clear all the current children - TODO move this to the base Widget class
     if (xw.Sys.isDefined(this.children)) {
       for (var i = 0; i < this.children.length; i++) {

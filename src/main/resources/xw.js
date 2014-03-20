@@ -1644,7 +1644,7 @@ xw.Widget = xw.Class.extend({
       if (xw.Sys.isDefined(pcl) &&
           xw.Sys.isDefined(pcl[prop]) &&
           typeof pcl[prop] == "function") {
-        var returnVal = pcl[prop](newValue);
+        var returnVal = pcl[prop].call(that, newValue);
         if (xw.Sys.isDefined(returnVal)) {
           newValue = returnVal;
         }
