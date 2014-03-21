@@ -9,10 +9,10 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
   },
   invoke: function(params, cb) {
     if (xw.Sys.isUndefined(cb)) {
-      cb = this.callback ? this.callback : function() {};
+      cb = this.callback.value ? this.callback.value : function() {};
     }
     
-    var url = this.url;
+    var url = this.url.value;
     if (params) {
       for (var p in params) {
          var replaceParam = "{" + p + "}";
@@ -23,6 +23,6 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
     xw.Ajax.get(url, function(response) { cb(response); });
   },
   toString: function() {
-    return "org.xwidgets.core.RestEndpoint[" + this.method + ":" + this.url + "]";
+    return "org.xwidgets.core.RestEndpoint[" + this.method.value + ":" + this.url + "]";
   }
 });

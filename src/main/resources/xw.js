@@ -94,7 +94,7 @@ xw.Sys = {
   getWidget: function(id) {
     for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
       var dm = xw.Controller.activeDataModules[i];
-      var w = dm._registeredWidgets[id];
+      var w = dm.getWidgetById(id);
       if (xw.Sys.isDefined(w)) {
         return w;
       }
@@ -219,23 +219,6 @@ xw.Sys = {
     }
     return n;
   },
-  arrayContains: function(arrayVal, value) {
-    var i;
-    for (i = 0; i < arrayVal.length; i++) {
-      if (arrayVal[i] === value) {
-        return true;
-      }
-    }
-    return false;
-  },
-  //
-  // Deletes the elements from an array that meet the specified condition
-  //
-  deleteArrayElements: function(arr, condition) {
-    for (var i = arr.length - 1; i >= 0; i--) {
-      if (condition(arr[i])) arr.splice(i,1);
-    }
-  },
   trim: function(value) {
     return value.replace(/^\s+|\s+$/g,"");
   },
@@ -357,20 +340,14 @@ xw.Sys = {
     }
   },
   setObjectProperty: function(obj, property, value) {
-    // Check if the object has a setter method
-    var setterName = "set" + xw.Sys.capitalize(property);
-    
-    // Do value conversion here if necessary, but ONLY if the value isn't an EL expression
-    if (!xw.EL.isExpression(value)) {
-      if (xw.Sys.isDefined(obj[property])) {
-        if (typeof obj[property] === "boolean" && typeof value !== "boolean") {
-           value = "true" === value;
-        }
+    var prop = obj[property] instanceof xw.Property ? obj[property] : null;
+  
+    if (prop) {
+      if (xw.EL.isExpression(value)) {
+        prop.binding = value;
+      } else {
+        prop.value = value;
       }
-    }
-    
-    if (xw.Sys.isDefined(obj, setterName) && typeof obj[setterName] === "function") {
-      obj[setterName](value);
     } else {
       obj[property] = value;
     }
@@ -378,6 +355,36 @@ xw.Sys = {
   clearChildren: function(e) {
     while (xw.Sys.isDefined(e) && e.hasChildNodes()) {
       e.removeChild(e.firstChild);
+    }
+  }
+};
+
+xw.Array = {
+  contains: function(arr, value) {
+    var i;
+    for (i = 0; i < arr.length; i++) {
+      if (arr[i] === value) {
+        return true;
+      }
+    }
+    return false;
+  },
+  remove: function(arr, value) {
+    for (var i = arr.length - 1; i >= 0; i--) {
+      if (arr[i] == value) arr.splice(i,1);
+    }  
+  },
+  //
+  // Deletes the elements from an array that meet the specified condition
+  //
+  deleteElements: function(arr, condition) {
+    for (var i = arr.length - 1; i >= 0; i--) {
+      if (condition(arr[i])) arr.splice(i,1);
+    }
+  },
+  iterate: function(arr, func) {
+    for (var i = 0; i < arr.length; i++) {
+      func(arr[i]);
     }
   }
 };
@@ -572,7 +579,7 @@ xw.EL = {
         }
       }
     }
-  },
+  },  
   // Creates a new EL binding for a widget, to notify that widget when the EL value changes
   // Params:
   //   widget - the widget to bind to (must not be null)
@@ -616,14 +623,6 @@ xw.EL = {
       }
     }
   },
-  copyWidgetBindings: function(widget, other) {
-    for (var i = xw.EL.bindings.length - 1; i >= 0; i--) {
-      var b = xw.EL.bindings[i];
-      if (b.widget == widget) {
-        xw.EL.createBinding(other, b.receiver, b.expr);
-      }
-    }    
-  },
   eval: function(widget, expr) {
     var e = xw.EL.regex(expr);
     if (e === null) {
@@ -648,7 +647,7 @@ xw.EL = {
     } 
     
     if (root === null) {
-      var w = widget.getOwner()._registeredWidgets[parts[0]];
+      var w = widget.getOwner().getWidgetById(parts[0]);
 
       // Next we check if there are any named widgets within the same view that match        
       if (xw.Sys.isDefined(w)) {  
@@ -668,7 +667,7 @@ xw.EL = {
     if (root === null) {
       for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
         var dm = xw.Controller.activeDataModules[i];
-        var w = dm._registeredWidgets[parts[0]];
+        var w = dm.getWidgetById(parts[0]);
         if (xw.Sys.isDefined(w)) {
           root = w;
           break;
@@ -1094,7 +1093,7 @@ xw.Controller = {
            }
          
            if (parent != null && xw.Sys.isDefined(parent.fqwn) && 
-               !xw.Sys.arrayContains(invalid[fqwn].parents, parent.fqwn)) {
+               !xw.Array.contains(invalid[fqwn].parents, parent.fqwn)) {
              invalid[fqwn].parents.push(parent.fqwn);
            }
          }
@@ -1219,12 +1218,12 @@ xw.Controller = {
         widget.attributes = c.attributes;
         widgets.push(widget);
         if (xw.Sys.isDefined(c.children) && c.children.length > 0) {
-          xw.Controller.parseChildren(owner, c.children, widget); 
+          xw.Controller.parseChildren(owner, c.children, widget);
         }
       } else if (c instanceof xw.TextNode) {
         widget = new xw.Text();
         widget.setParent(parentWidget);
-        widget.setOwner(owner);      
+        widget.setOwner(owner);
         widget.escape = c.escape;
         
         // Set the widget's attributes
@@ -1249,7 +1248,6 @@ xw.Controller = {
 //
 xw.WidgetManager = {
   WS_QUEUED: "QUEUED",
-//  WS_WAITING: "WAITING",
   WS_LOADING: "LOADING",
   WS_LOADED: "LOADED",
   WS_FAILED: "FAILED",
@@ -1341,7 +1339,6 @@ xw.WidgetManager = {
 //
 // LAYOUT MANAGERS
 //
-
 xw.BorderLayout = function() {
   this.bounds = {};
 
@@ -1475,19 +1472,19 @@ xw.Action.prototype.invoke = function(callee, args) {
     var params = this.getOwner().params;
     
     // register variables for all widgets within the same view/data module with an id
-    for (var id in this.getOwner()._registeredWidgets) {
-      __registered[id] = this.getOwner()._registeredWidgets[id];
-    }
+    xw.Array.iterate(this.getOwner()._registeredWidgets, function(element) {
+      __registered[element.id.value] = element;
+    });
 
     // register variables for all widgets with an id from any data modules, if there
     // is no local overriding variable
     for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
-      var dm = xw.Controller.activeDataModules[i];           
-      for (var id in dm._registeredWidgets) {
-        if (xw.Sys.isUndefined(__registered[id])) {
-          __registered[id] = dm._registeredWidgets[id];
-        }
-      }    
+      var dm = xw.Controller.activeDataModules[i];
+      xw.Array.iterate(dm._registeredWidgets, function(element) {
+        if (xw.Sys.isUndefined(__registered[element.id.value])) {
+          __registered[element.id.value] = element;
+        }       
+      });
     }
     
     // The script must have access to named widgets (widgets with an id)
@@ -1528,6 +1525,56 @@ xw.Action.prototype.getOwner = function() {
     return this.view;
   } else if (xw.Sys.isDefined(this.dataModule)) {
     return this.dataModule;
+  }
+};
+
+//
+// Defines a registered widget property
+//
+xw.Property = function(owner, name, options) {
+  this.owner = owner;
+  this.name = name;
+  if (options) {
+    this.listener = options.listener;
+  }
+
+  var that = this;
+
+  var valueWatcher = function(prop, oldVal, newVal) {
+    // If neither the old or new value are defined, don't do anything
+    if (xw.Sys.isUndefined(oldVal) && xw.Sys.isUndefined(newVal)) {
+      return;
+    }
+    var that = this;
+    var newValue = newVal;
+       
+    // Invoke any property change listener that has been registered
+    if (xw.Sys.isDefined(that.listener)) {
+      var returnVal = that.listener.call(that.owner, newValue);
+      if (xw.Sys.isDefined(returnVal)) {
+        newValue = returnVal;
+      }
+    }
+    
+    return newValue;
+  };
+  
+  var bindingWatcher = function(prop, oldVal, newVal) {
+    xw.EL.clearWidgetBinding(that.owner, that.name);
+    if (xw.EL.isExpression(newVal)) {
+      that.value = xw.EL.createBinding(that.owner, that.name, newVal);
+    }
+    return newVal;
+  };
+     
+  this.watch("value", valueWatcher);
+  this.watch("binding", bindingWatcher);
+  
+  if (options) {
+    if (options.default) {
+      this.value = options.default;
+    }
+    this.required = xw.Sys.isDefined(options.required) ? options.required : false;
   }
 };
 
@@ -1578,19 +1625,15 @@ xw.Action.prototype.getOwner = function() {
 xw.Widget = xw.Class.extend({
   _constructor: function() {
     this.parent = null;
-    this.children = [];  
+    this.children = [];
+    this.registerProperty("id", {listener: this.updateId});
   },
-  getId: function() {
-    return this.id;
-  },
-  setId: function(id) {
+  updateId: function(id) {
     // register the id of this widget with the owning view.
-    if (xw.Sys.isDefined(this.id)) {
-      this.getOwner().unregisterWidget(this);
-      this.id = null;
+    if (xw.Sys.isDefined(id)) {
+      this.getOwner().registerWidget(this);
     } else {
-      this.id = id;
-      this.getOwner().registerWidget(this);  
+      this.getOwner().unregisterWidget(this);
     }
   },
   getOwner: function() {
@@ -1614,66 +1657,7 @@ xw.Widget = xw.Class.extend({
     if (xw.Sys.isUndefined(name)) {
       throw "No name specified for registered property on object [" + this.toString() + "]";
     }
-    
-    if (xw.Sys.isUndefined(this._registeredProperties)) {
-      // register the id property
-      this._registeredProperties = {id: undefined};    
-    }
-
-    if (xw.Sys.isDefined(this._registeredProperties[name])) {
-      return; // Already registered
-//      throw "Property [" + name + "] already registered for object [" + this.toString() + "]";
-    }
-   
-    this._registeredProperties[name] = options;
-
-    var that = this;
-    var watcher = function(prop, oldVal, newVal) {
-      // Clear any existing EL bindings for this property
-      xw.EL.clearWidgetBinding(that, prop);
-
-      var newValue = newVal;
-      
-      // If the new value is an EL expression then create a binding
-      if (xw.EL.isExpression(newValue)) {
-        newValue = xw.EL.createBinding(that, prop, newVal);
-      } 
-      
-      // Invoke any property change listener that has been registered
-      var pcl = that._propertyChangeListeners;
-      if (xw.Sys.isDefined(pcl) &&
-          xw.Sys.isDefined(pcl[prop]) &&
-          typeof pcl[prop] == "function") {
-        var returnVal = pcl[prop].call(that, newValue);
-        if (xw.Sys.isDefined(returnVal)) {
-          newValue = returnVal;
-        }
-      }
-      
-      return newValue;
-    };
-       
-    this.watch(name, watcher);
-    
-    if (xw.Sys.isDefined(options) && options != null) {
-      if (xw.Sys.isDefined(options.default)) {
-        this[name] = options.default;
-      }  
-    }
-  },
-  // This method allows you to register another method as a listener that will be invoked
-  // when the value of the named property changes
-  registerPropertyChangeListener: function(property, listener) {
-    if (xw.Sys.isUndefined(property)) {
-      throw "No property name specified for property change listener on object [" + this.toString() + "]";
-    }
-    
-    if (xw.Sys.isUndefined(this._propertyChangeListeners)) {
-      // register the id property
-      this._propertyChangeListeners = {};    
-    }
-   
-    this._propertyChangeListeners[property] = listener;  
+    this[name] = new xw.Property(this, name, options);
   },
   addEvent: function(control, eventName, event) {     
     if (xw.Sys.isDefined(this["on" + eventName]) && xw.Sys.isDefined(event)) {        
@@ -1689,44 +1673,37 @@ xw.Widget = xw.Class.extend({
       // metadata containing the known events for this widget
       this._registeredEvents = [];        
     }
-    if (!xw.Sys.arrayContains(this._registeredEvents, eventName)) {
+    if (!xw.Array.contains(this._registeredEvents, eventName)) {
       this._registeredEvents.push(eventName);
     }
   },
   destroy: function() {
-    // NO-OP
+    xw.EL.clearBindings(this);
   },
   // Makes a cloned copy of the widget.  Any properties that contain
   // references to other widgets will not be cloned, they will just be
   // updated with a reference to that widget
   clone: function(parent) {
-//    var o = xw.Sys.newInstance(this._className);
-    //var o = this.constructor();
     var o = Object.create(this);
 
     // Clone the registered properties only
-    for (var p in this._registeredProperties) {
-      if (this[p] instanceof xw.Widget) {
-        o[p] = this[p];
-      } else {
-        o[p] = xw.Sys.cloneObject(this[p]);
+    for (var p in this) {
+      if (this[p] instanceof xw.Property) {
+        var prop = this[p];
+        if (o[p]) {
+          if (xw.EL.isExpression(this[p].binding)) {
+            o[p].binding = this[p].binding;
+          } else {
+            if (this[p].value instanceof xw.Widget) {
+              o[p].value = this[p].value;
+            } else {
+              o[p].value = xw.Sys.cloneObject(this[p].value);
+            }
+          }
+        }
       }
     }
-    
-    // Copy the EL bindings
-    
-    
-/*    for (var i = 0; i < this._registeredProperties.length; i++) {
-      var p = this._registeredProperties[i];
-      if (this[p] instanceof xw.Widget) {
-        o[p] = this[p];
-      } else {
-        o[p] = xw.Sys.cloneObject(this[p]);
-      }    
-    }*/
-    
-    // Clone the EL bindings
-    
+       
     // Set the parent and clone the children
     o.parent = xw.Sys.isUndefined(parent) ? this.parent : parent;
     for (var i = 0; i < this.children.length; i++) {
@@ -1735,7 +1712,7 @@ xw.Widget = xw.Class.extend({
     return o;
   },
   toString: function() {
-    return "xw.Widget[" + this.id + "]";
+    return "xw.Widget[" + this.id.value + "]";
   }
 });
 
@@ -1819,25 +1796,19 @@ xw.Text = xw.Visual.extend({
     this._super(false);
     delete children;
     var that = this;
-    var cb = function(val) {
-      that.renderedText = val;
-      that.renderText();
-    };
-    this.registerProperty("value");
-    this.registerPropertyChangeListener("value", cb);
+    this.registerProperty("value", {listener: this.renderText});
     this.registerProperty("escape", {default: true});
     this.control = null;  
-    this.renderedText = "";  
   },
   render: function(container) {
     this.control = document.createElement("span");
     container.appendChild(this.control);
-    this.renderText();  
+    this.renderText(this.value.value);  
   },
-  renderText: function() {
+  renderText: function(value) {
     if (this.control !== null) {
-      var text = (xw.Sys.isDefined(this.renderedText) && this.renderedText !== null) ?
-         this.renderedText : "";
+      var text = (xw.Sys.isDefined(value) && value !== null) ?
+         value : "";
       if (this.escape) {
         this.control.innerHTML = text;
       } else {
@@ -1874,7 +1845,7 @@ xw.View = xw.Container.extend({
     this.registerEvent("afterRender");
     // The container control
     this.container = null;  
-    this._registeredWidgets = {};  
+    this._registeredWidgets = [];  
     delete this.parent;    
   },
   //
@@ -1908,13 +1879,15 @@ xw.View = xw.Container.extend({
   },
   // Registers a named (i.e. having an "id" property) widget
   registerWidget: function(widget) {
-    this._registeredWidgets[widget.id] = widget;
+    this._registeredWidgets.push(widgets);
   },
   unregisterWidget: function(widget) {
-    for (var id in this._registeredWidgets) {
-      if (this._registeredWidgets[id] == widget) {
-        delete this._registeredWidgets[id];
-        break;
+    xw.Array.remove(this._registeredWidgets, widget);
+  },
+  getWidgetById: function(id) {
+    for (var i = 0; i < this._registeredWidgets.length; i++) {
+      if (this._registeredWidgets[i].id.value == id) {
+        return this._registeredWidgets[i];
       }
     }
   },
@@ -1946,7 +1919,7 @@ xw.DataModule = xw.NonVisual.extend({
     this.registerProperty("moduleName");
     this.registerProperty("params");
     this.registerEvent("afterOpen");
-    this._registeredWidgets = {};  
+    this._registeredWidgets = [];  
     delete this.parent;
   },
   open: function() {
@@ -1957,13 +1930,15 @@ xw.DataModule = xw.NonVisual.extend({
   },
   // Registers a named (i.e. having an "id" property) widget
   registerWidget: function(widget) {
-    this._registeredWidgets[widget.id] = widget;
+    this._registeredWidgets.push(widget);
   },
   unregisterWidget: function(widget) {
-    for (var id in this._registeredWidgets) {
-      if (this._registeredWidgets[id] == widget) {
-        delete this._registeredWidgets[id];
-        break;
+    xw.Array.remove(this._registeredWidgets, widget);
+  },
+  getWidgetById: function(id) {
+    for (var i = 0; i < this._registeredWidgets.length; i++) {
+      if (this._registeredWidgets[i].id.value == id) {
+        return this._registeredWidgets[i];
       }
     }
   },

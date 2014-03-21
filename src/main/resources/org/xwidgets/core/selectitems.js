@@ -1,54 +1,31 @@
 package("org.xwidgets.core");
 
-org.xwidgets.core.SelectItems = function() {
-  xw.Visual.call(this);
-  this._className = "org.xwidgets.core.SelectItems"; 
-  this.registerProperty("value", null); 
-  this.registerProperty("var", null);
-  this.registerProperty("itemValue", null);
-  this.registerProperty("itemLabel", null);
-  this.rendered = false;
-
-  this.currentItem = null;
-};
-
-org.xwidgets.core.SelectItems.prototype = new xw.Visual();
-  
-org.xwidgets.core.SelectItems.prototype.render = function() {
-  this.renderOptions();
-  this.rendered = true;
-};
-
-org.xwidgets.core.SelectItems.prototype.renderOptions = function() {
-  if (this.value != null) {
-    for (var i = 0; i < this.value.length; i++) {
-      this.currentItem = this.value[i];
-      this.parent.addItem(xw.EL.eval(this, this.itemValue), 
-        xw.EL.eval(this, this.itemLabel), this.value[i]);
-    }
-  }
-};
-
-org.xwidgets.core.SelectItems.prototype.resolve = function(name) {
-  if (name == this.var) {
-    return this.currentItem;
-  }
-};
-
-org.xwidgets.core.SelectItems.prototype.setValue = function(value) {
-  if (xw.EL.isExpression(value)) {
-    var v = xw.EL.createBinding(this, "value", value);
-    if (xw.Sys.isDefined(v)) {
-      this.value = v;
-      if (this.rendered) {
-        this.renderOptions();
+org.xwidgets.core.SelectItems = xw.Visual.extend({
+  _constructor: function() {
+    this.registerProperty("value", {default: null}); 
+    this.registerProperty("var", {default: null});
+    this.registerProperty("itemValue", {default: null});
+    this.registerProperty("itemLabel", {default: null});
+    this.rendered = false;
+    this.currentItem = null;
+  },
+  render: function() {
+    this.renderOptions();
+    this.rendered = true;
+  },
+  renderOptions: function() {
+    if (this.value.value != null) {
+      for (var i = 0; i < this.value.value.length; i++) {
+        this.currentItem = this.value.value[i];
+        this.parent.addItem(xw.EL.eval(this, this.itemValue.value),
+          xw.EL.eval(this, this.itemLabel.value), this.value.value[i]);
       }
-    }    
-  } else {
-    this.value = value;
-    if (this.rendered) {
-      this.renderOptions();
+    }
+  },
+  resolve: function(name) {
+    if (name == this.var) {
+      return this.currentItem;
     }
   }
-};
+});
 

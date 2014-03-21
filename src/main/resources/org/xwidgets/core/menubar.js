@@ -4,12 +4,11 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
   _constructor: function(label) {
     this._super();
     this.registerProperty("label", {default: label});
-    this.registerProperty("rendered");
+    this.registerProperty("rendered", {default: true});
     this.registerProperty("styleClass", {default: "xw_menuitem"});
     this.registerProperty("selectedStyleClass", {default: "xw_menuitem_selected"});
     this.registerProperty("submenuStyleClass", {default: "xw_submenu"});
-    this.registerProperty("definition");
-    this.registerPropertyChangeListener("definition", this.updateDefinition);
+    this.registerProperty("definition", {listener: this.updateDefinition});
     this.registerEvent("onclick");
     this.control = null;
     this.submenuContainer = null;
@@ -47,7 +46,7 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     if (this.control == null) {
       this.control = document.createElement("div");
       
-      this.control.appendChild(document.createTextNode(this.label === null ? "" : this.label));      
+      this.control.appendChild(document.createTextNode(this.label.value === null ? "" : this.label.value));
       
       if (this.children.length > 0) {
         var icon = document.createElement("i");
@@ -55,8 +54,8 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
         this.control.appendChild(icon);
       }
       
-      if (xw.Sys.isDefined(this.styleClass)) {
-        this.control.className = this.styleClass;
+      if (xw.Sys.isDefined(this.styleClass.value)) {
+        this.control.className = this.styleClass.value;
       }
       container.appendChild(this.control);
       
@@ -93,15 +92,15 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     }
   },
   click: function(event) {
-    var menuBar = this.getMenuBar();
-    menuBar.selectItem(this);
+    var m = this.getMenuBar();
+    m.selectItem(this);
     if (this.children.length == 0) {
       if (this.onclick) {
-        menuBar.close();
-        this.onclick(event);
-      } else if (menuBar && menuBar.onclick) {
-        menuBar.close();
-        menuBar.onclick.invoke(menuBar, {item: this});
+        m.close();
+        this.onclick.invoke(m);
+      } else if (m && m.onclick) {
+        m.close();
+        m.onclick.invoke(m, {item: this});
       }
     }
     xw.Sys.cancelEventBubble(event);
@@ -110,7 +109,6 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     if (this.getMenuBar().isOpen()) {
       this.getMenuBar().trackMouseOver(this);
     }
-    
     xw.Sys.cancelEventBubble(event);
   },
   getMenuBar: function() {
@@ -125,8 +123,8 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
       var c = this.submenuContainer;
       if (c == null) {
         c = document.createElement("div");
-        if (xw.Sys.isDefined(this.submenuStyleClass)) {
-          c.className = this.submenuStyleClass;
+        if (xw.Sys.isDefined(this.submenuStyleClass.value)) {
+          c.className = this.submenuStyleClass.value;
         }
         
         c.style.position = "absolute";
@@ -151,16 +149,16 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
       }
       this.submenuContainer.style.display = "";
     }
-    if (xw.Sys.isDefined(this.selectedStyleClass)) {
-      this.control.className = this.selectedStyleClass;
+    if (xw.Sys.isDefined(this.selectedStyleClass.value)) {
+      this.control.className = this.selectedStyleClass.value;
     }
   },
   unselect: function() {
     if (this.submenuContainer) {
       this.submenuContainer.style.display = "none";  
     }
-    if (xw.Sys.isDefined(this.styleClass)) {
-      this.control.className = this.styleClass;
+    if (xw.Sys.isDefined(this.styleClass.value)) {
+      this.control.className = this.styleClass.value;
     }
   }
 });
@@ -177,8 +175,8 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
   render: function(container) {
     if (this.control == null) {
       this.control = document.createElement("div");
-      if (xw.Sys.isDefined(this.styleClass)) {
-        this.control.className = this.styleClass;
+      if (xw.Sys.isDefined(this.styleClass.value)) {
+        this.control.className = this.styleClass.value;
       }
       
       container.appendChild(this.control);      

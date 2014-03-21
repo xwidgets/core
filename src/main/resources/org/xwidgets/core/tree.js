@@ -221,17 +221,64 @@ org.xwidgets.core.TreeUtil = {
   }
 };
 
-org.xwidgets.core.Tree = function() {
-  xw.Visual.call(this);
-  this._className = "org.xwidgets.core.Tree";
+org.xwidgets.core.Tree = xw.Visual.extend({
+  _constructor: function() {
+    this.rootVisible = false;  
+    this.model = null;
+    this.renderer = new org.xwidgets.core.DefaultTreeRenderer();
+    this.onSelect = null;
+    this.onDragDrop = null;
+    this.selectedNode = null;
+  },
+  isRootVisible: function() {
+    return this.rootVisible;
+  },
+  setRootVisible: function(visible) {
+    this.rootVisible = visible;
+  },
+  render: function(container) {
+    this.renderer.render(this, container, this.model.getRoot(), true);
+  },
+  repaintNode: function(node) {
+    this.renderer.render(this, null, node, true);
+  },
+  getModel: function() {
+    return this.model;
+  },
+  setModel: function(model) {
+    this.model = model;
+    this.model.setTree(this);
+  },
+  selectNode: function(node) {
+    if (this.selectedNode) {
+      this.renderer.renderSelected(this.selectedNode, false);
+    }
+    this.selectedNode = node;
+    this.renderer.renderSelected(node, true);
+    if (this.onSelect) {
+      this.onSelect(node);
+    }
+  },
+  initiateDragDrop: function(sourceNode, targetNode) {
+    if ((this.onDragDrop && this.onDragDrop(sourceNode, targetNode)) || !this.onDragDrop) {
+      this.moveNode(sourceNode, targetNode);
+    }
+  },
+  moveNode: function(sourceNode, targetNode) {
+    var sourceParent = sourceNode.getParent();
+    if (sourceParent != targetNode) {
+      sourceParent.remove(sourceNode);
 
-  this.rootVisible = false;  
-  this.model = null;
-  this.renderer = new org.xwidgets.core.DefaultTreeRenderer();
-  this.onSelect = null;
-  this.onDragDrop = null;
-  this.selectedNode = null;
-};
+      targetNode.add(sourceNode);
+
+      targetNode.childrenCell.appendChild(sourceNode.tableCtl);
+      this.repaintNode(sourceParent);
+
+      targetNode.expanded = true;
+      this.repaintNode(targetNode);
+    }
+  }
+});
 
 // Global tree variables
 org.xwidgets.core.Tree.mouseDownNode = null;
@@ -240,65 +287,6 @@ org.xwidgets.core.Tree.mouseDownStartPos = null;
 org.xwidgets.core.Tree.dragThreshold = 5;
 org.xwidgets.core.Tree.dragDiv = null;
 org.xwidgets.core.Tree.targetNode = null;
-
-org.xwidgets.core.Tree.prototype = new xw.Visual();
-
-org.xwidgets.core.Tree.prototype.isRootVisible = function() {
-  return this.rootVisible;
-};
-
-org.xwidgets.core.Tree.prototype.setRootVisible = function(visible) {
-  this.rootVisible = visible;
-};
-
-org.xwidgets.core.Tree.prototype.render = function(container) {
-  this.renderer.render(this, container, this.model.getRoot(), true);
-};
-
-org.xwidgets.core.Tree.prototype.repaintNode = function(node) {
-  this.renderer.render(this, null, node, true);
-};
-
-org.xwidgets.core.Tree.prototype.getModel = function() {
-  return this.model;
-};
-
-org.xwidgets.core.Tree.prototype.setModel = function(model) {
-  this.model = model;
-  this.model.setTree(this);
-};
-
-org.xwidgets.core.Tree.prototype.selectNode = function(node) {
-  if (this.selectedNode) {
-    this.renderer.renderSelected(this.selectedNode, false);
-  }
-  this.selectedNode = node;
-  this.renderer.renderSelected(node, true);
-  if (this.onSelect) {
-    this.onSelect(node);
-  }
-};
-
-org.xwidgets.core.Tree.prototype.initiateDragDrop = function(sourceNode, targetNode) {
-  if ((this.onDragDrop && this.onDragDrop(sourceNode, targetNode)) || !this.onDragDrop) {
-    this.moveNode(sourceNode, targetNode);
-  }
-};
-
-org.xwidgets.core.Tree.prototype.moveNode = function(sourceNode, targetNode) {
-  var sourceParent = sourceNode.getParent();
-  if (sourceParent != targetNode) {
-    sourceParent.remove(sourceNode);
-
-    targetNode.add(sourceNode);
-
-    targetNode.childrenCell.appendChild(sourceNode.tableCtl);
-    this.repaintNode(sourceParent);
-
-    targetNode.expanded = true;
-    this.repaintNode(targetNode);
-  }
-};
 
 // Global tree methods
 

@@ -3,7 +3,7 @@ package("org.xwidgets.core");
 org.xwidgets.core.Fragment = function() {
   xw.Visual.call(this);
   this._className = "org.xwidgets.core.Fragment";
-  this.registerProperty("rendered", true);
+  this.registerProperty("rendered", {default: true});
   
   this.childrenRendered = false;
   this.control = null;
@@ -22,7 +22,7 @@ org.xwidgets.core.Fragment.prototype.render = function(container) {
 org.xwidgets.core.Fragment.prototype.doRender = function() {
   if (this.control === null) return;
   
-  if (this.rendered === true) {
+  if (this.rendered.value === true) {
     if (!this.childrenRendered) {
       this.renderChildren(this.control);
       this.childrenRendered = true;      
@@ -35,9 +35,9 @@ org.xwidgets.core.Fragment.prototype.doRender = function() {
 
 org.xwidgets.core.Fragment.prototype.setRendered = function(rendered) {
   if (xw.EL.isExpression(rendered)) {
-    this.rendered = xw.EL.createBinding(this, "rendered", rendered) === true;
+    this.rendered.value = xw.EL.createBinding(this, "rendered", rendered) === true;
   } else {
-    this.rendered = rendered;
+    this.rendered.value = rendered;
   }
   
   this.doRender();

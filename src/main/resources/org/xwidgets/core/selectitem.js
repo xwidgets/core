@@ -1,19 +1,15 @@
 package("org.xwidgets.core");
 
-org.xwidgets.core.SelectItem = function() {
-  xw.Visual.call(this);
-  this._className = "org.xwidgets.core.SelectItem"; 
-  this.registerProperty("itemValue", null);
-  this.registerProperty("itemLabel", null);
-  this.rendered = false;
-};
-
-org.xwidgets.core.SelectItem.prototype = new xw.Visual();
-  
-org.xwidgets.core.SelectItem.prototype.render = function() { 
-  if (!this.rendered) {
-    this.parent.addItem(this.itemValue, this.itemLabel);
-    this.rendered = true;
+org.xwidgets.core.SelectItem = xw.Visual.extend({
+  _constructor: function() {
+    this.registerProperty("itemValue", {default: null});
+    this.registerProperty("itemLabel", {default: null});
+    this.rendered = false;
+  },
+  render: function() { 
+    if (!this.rendered) {
+      this.parent.addItem(this.itemValue.value, this.itemLabel.value);
+      this.rendered = true;
+    }
   }
-};
-  
+}); 

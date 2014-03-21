@@ -19,8 +19,8 @@ org.xwidgets.core.InputSearch.prototype.render = function(container) {
     this.control = document.createElement("input");    
     this.control.type = "text";
     this.control.className = this.styleClass;
-    if (this.value != null) {
-      this.control.value = this.value;
+    if (this.value.value != null) {
+      this.control.value = this.value.value;
     }
     
     var that = this;
@@ -56,12 +56,12 @@ org.xwidgets.core.InputSearch.prototype.getValue = function() {
 };
 
 org.xwidgets.core.InputSearch.prototype.setValue = function(value) {
-  this.value = value;
+  this.value.value = value;
   if (this.control != null) {
-    this.control.value = this.value;
+    this.control.value = this.value.value;
   }
 };
 
 org.xwidgets.core.InputSearch.prototype.toString = function() {
-  return "org.xwidgets.core.InputSearch[" + this.id + "]";
+  return "org.xwidgets.core.InputSearch[" + this.id.value + "]";
 };

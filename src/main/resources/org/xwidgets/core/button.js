@@ -12,10 +12,10 @@ org.xwidgets.core.Button = xw.Visual.extend({
     if (this.control == null) {
       this.control = document.createElement("button");
       var span = document.createElement("span");
-      span.appendChild(document.createTextNode(this.label === null ? "" : this.label));
+      span.appendChild(document.createTextNode(this.label.value === null ? "" : this.label.value));
       this.control.appendChild(span);
-      if (xw.Sys.isDefined(this.styleClass)) {
-        this.control.className = this.styleClass;
+      if (xw.Sys.isDefined(this.styleClass.value)) {
+        this.control.className = this.styleClass.value;
       }
       container.appendChild(this.control);
       this.addEvent(this.control, "click", this.onclick);

@@ -5,7 +5,7 @@ org.xwidgets.core.Surrogate = xw.NonVisual.extend({ });
 org.xwidgets.core.Repeat = xw.Visual.extend({
   _constructor: function() {
     this._super();
-    this.registerProperty("value", {default:null, elListener: this.updateValue}); 
+    this.registerProperty("value", {default:null, listener: this.updateValue}); 
     this.registerProperty("var", {default: null});
     this.control = document.createElement("span");
     this.currentItem = null;
@@ -13,16 +13,16 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
   },  
   render: function(container) {
     container.appendChild(this.control);
-    this.renderChildren();
+    this.renderChildren(this.value.value);
   },
-  renderChildren: function() {
+  renderChildren: function(value) {
     xw.Sys.clearChildren(this.control);
 
-    if (this.value != null) {
+    if (value != null) {
       this.surrogates = [];  
 
-      for (var i = 0; i < this.value.length; i++) {
-        this.currentItem = this.value[i];
+      for (var i = 0; i < value.length; i++) {
+        this.currentItem = value[i];
               
         var surrogate = new org.xwidgets.core.Surrogate();
         surrogate.parent = this;
@@ -32,7 +32,7 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
           var clone = this.children[j].clone(surrogate);
           surrogate.children.push(clone);
 
-          clone.render(this.control);
+          clone.render.call(clone, this.control);
         }
       }
       
@@ -42,13 +42,12 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
     }
   },
   resolve: function(name) {
-    if (name == this.var) {
+    if (name == this.var.value) {
       return this.currentItem;
     }
   },
   updateValue: function(value) {
-    this.value = value;
-    this.renderChildren();
+    this.renderChildren(value);
   }
 });
 
