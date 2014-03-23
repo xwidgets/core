@@ -1994,7 +1994,7 @@ xw.Popup = {
     
     var closebtn = document.createElement("div");
     closebtn.className = xw.Popup.closeButtonClass;
-    closebtn.onclick = xw.closePopup;
+    closebtn.onclick = xw.Popup.close;
     closebtn.style.zIndex = 150;
     inner.appendChild(closebtn);  
       
