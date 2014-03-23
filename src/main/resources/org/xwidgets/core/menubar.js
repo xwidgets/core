@@ -31,7 +31,7 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     var items = [];
     for (var node in nodes) {
       var mi = new org.xwidgets.core.MenuItem(nodes[node].label);
-      mi.setParent(parent); 
+      mi.parent = parent; 
       
       if (nodes[node].children) {
         mi.children = this.parseDefinition(nodes[node].children, mi);
