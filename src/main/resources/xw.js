@@ -1219,8 +1219,8 @@ xw.Controller = {
         widget = new xw.XHtml();      
         widget.parent = parentWidget;
         widget.owner = owner;
-        widget.tagName = c.tagName;
-        widget.attributes = c.attributes;
+        widget.tagName.value = c.tagName;
+        widget.attributes.value = c.attributes;
         widgets.push(widget);
         if (xw.Sys.isDefined(c.children) && c.children.length > 0) {
           xw.Controller.parseChildren(owner, c.children, widget);
