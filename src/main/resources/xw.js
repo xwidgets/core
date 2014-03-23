@@ -211,8 +211,13 @@ xw.Sys = {
     return eval("typeof " + fqcn) === "function";
   },
   cloneObject: function(o) {
-    if (o instanceof xw.Widget) return o.clone();
-    if (o == null || typeof(o) != 'object') return o;
+    if (xw.Sys.isUndefined(o)) {
+      return undefined;
+    } else if (o instanceof xw.Widget) {
+      return o.clone();
+    } else if (o == null || typeof(o) != 'object') {
+      return o;
+    }
     var n = new o.constructor();
     for (var key in o) {
       n[key] = xw.Sys.cloneObject(o[key]);
@@ -1191,8 +1196,8 @@ xw.Controller = {
         
         // Create an instance of the widget and set its parent and view
         widget = xw.Sys.newInstance(c.fqwn);
-        widget.setParent(parentWidget);
-        widget.setOwner(owner);      
+        widget.parent = parentWidget;
+        widget.owner = owner;
         
         // Set the widget's attributes
         for (var p in c.attributes) {       
@@ -1704,11 +1709,17 @@ xw.Widget = xw.Class.extend({
       }
     }
        
-    // Set the parent and clone the children
+    // Set the parent
     o.parent = xw.Sys.isUndefined(parent) ? this.parent : parent;
-    for (var i = 0; i < this.children.length; i++) {
-      o.children.push(this.children[i].clone(o));
-    }   
+    
+    // Clone the children if there are any
+    if (this.children.length > 0) {
+      o.children = [];
+    
+      for (var i = 0; i < this.children.length; i++) {
+        o.children.push(this.children[i].clone(o));
+      }
+    }
     return o;
   },
   toString: function() {
@@ -1764,14 +1775,14 @@ xw.NonVisual = xw.Widget.extend({
 xw.XHtml = xw.Visual.extend({
   _constructor: function() {
     this._super(false);
-    this.registerProperty("tagName", null);
-    this.registerProperty("attributes", null);
+    this.registerProperty("tagName", {default: null});
+    this.registerProperty("attributes", {default: null});
     this.control = null;  
   },
   render: function(container) {
-    this.control = document.createElement(this.tagName);
-    for (var a in this.attributes) {
-      this.setAttribute(a, this.attributes[a]);
+    this.control = document.createElement(this.tagName.value);
+    for (var a in this.attributes.value) {
+      this.setAttribute(a, this.attributes.value[a]);
     }
     container.appendChild(this.control);
     this.renderChildren(this.control);  
@@ -1786,7 +1797,7 @@ xw.XHtml = xw.Visual.extend({
     }
   },
   toString: function() {
-    return "xw.XHtml[" + this.tagName + "]"; 
+    return "xw.XHtml[" + this.tagName.value + "]"; 
   }
 });
 
