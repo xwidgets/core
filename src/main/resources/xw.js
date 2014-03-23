@@ -652,7 +652,7 @@ xw.EL = {
     } 
     
     if (root === null) {
-      var w = widget.getOwner().getWidgetById(parts[0]);
+      var w = widget.owner.getWidgetById(parts[0]);
 
       // Next we check if there are any named widgets within the same view that match        
       if (xw.Sys.isDefined(w)) {  
@@ -1213,12 +1213,12 @@ xw.Controller = {
       } else if (c instanceof xw.EventNode) {      
         var action = new xw.Action();
         action.script = c.script;
-        action.setOwner(owner);      
+        action.owner = owner; 
         parentWidget[c.type] = action;
       } else if (c instanceof xw.XHtmlNode) {
         widget = new xw.XHtml();      
-        widget.setParent(parentWidget);
-        widget.setOwner(owner);
+        widget.parent = parentWidget;
+        widget.owner = owner;
         widget.tagName = c.tagName;
         widget.attributes = c.attributes;
         widgets.push(widget);
@@ -1227,8 +1227,8 @@ xw.Controller = {
         }
       } else if (c instanceof xw.TextNode) {
         widget = new xw.Text();
-        widget.setParent(parentWidget);
-        widget.setOwner(owner);
+        widget.parent = parentWidget;
+        widget.owner = owner;
         widget.escape = c.escape;
         
         // Set the widget's attributes
@@ -1474,10 +1474,10 @@ xw.Action.prototype.invoke = function(callee, args) {
     
     // local variable, visible to our evaluated script -
     // makes the view or data module params available
-    var params = this.getOwner().params;
+    var params = this.owner.params;
     
     // register variables for all widgets within the same view/data module with an id
-    xw.Array.iterate(this.getOwner()._registeredWidgets, function(element) {
+    xw.Array.iterate(this.owner._registeredWidgets, function(element) {
       __registered[element.id.value] = element;
     });
 
@@ -1514,22 +1514,6 @@ xw.Action.prototype.invoke = function(callee, args) {
     }
     
     return new Function(argNames, __script).apply(callee, a);
-  }
-};
-
-xw.Action.prototype.setOwner = function(owner) {
-  if (owner instanceof xw.View) {
-    this.view = owner;
-  } else if (owner instanceof xw.DataModule) {
-    this.dataModule = owner;
-  }
-};
-
-xw.Action.prototype.getOwner = function() {
-  if (xw.Sys.isDefined(this.view)) {
-    return this.view;
-  } else if (xw.Sys.isDefined(this.dataModule)) {
-    return this.dataModule;
   }
 };
 
@@ -1630,33 +1614,17 @@ xw.Property = function(owner, name, options) {
 xw.Widget = xw.Class.extend({
   _constructor: function() {
     this.parent = null;
+    this.owner = null;
     this.children = [];
     this.registerProperty("id", {listener: this.updateId});
   },
   updateId: function(id) {
     // register the id of this widget with the owning view.
     if (xw.Sys.isDefined(id)) {
-      this.getOwner().registerWidget(this);
+      this.owner.registerWidget(this);
     } else {
-      this.getOwner().unregisterWidget(this);
+      this.owner.unregisterWidget(this);
     }
-  },
-  getOwner: function() {
-    if (xw.Sys.isDefined(this.view)) {
-      return this.view;
-    } else if (xw.Sys.isDefined(this.dataModule)) {
-      return this.dataModule;
-    }
-  },
-  setOwner: function(owner) {
-    if (owner instanceof xw.View) {
-      this.view = owner;
-    } else if (owner instanceof xw.DataModule) {
-      this.dataModule = owner;
-    }
-  },
-  setParent: function(parent) {
-    this.parent = parent;
   },
   registerProperty: function(name, options) {
     if (xw.Sys.isUndefined(name)) {
