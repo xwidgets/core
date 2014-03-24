@@ -1766,7 +1766,12 @@ xw.XHtml = xw.Visual.extend({
   render: function(container) {
     this.control = document.createElement(this.tagName.value);
     for (var a in this.attributes.value) {
-      this.setAttribute(a, this.attributes.value[a]);
+      var val = this.attributes.value[a];
+      if (xw.EL.isExpression(val)) {
+        this.setAttribute(a, xw.EL.eval(this, val));
+      } else {
+        this.setAttribute(a, val);
+      }
     }
     container.appendChild(this.control);
     this.renderChildren(this.control);  
@@ -1784,6 +1789,12 @@ xw.XHtml = xw.Visual.extend({
     return "xw.XHtml[" + this.tagName.value + "]"; 
   }
 });
+
+xw.XHtml.attributeMappings = {
+  label: {
+    for: "htmlFor"
+  }
+};
 
 // Represents plain ol' text
 xw.Text = xw.Visual.extend({
@@ -2009,8 +2020,8 @@ xw.Popup = {
     var outer = document.createElement("div");
     outer.style.position = "absolute";
     outer.style.zIndex = 123;
-    outer.style.width = (xw.Sys.isUndefined(width) ? "400px" : width + "px");
-    outer.style.height = (xw.Sys.isUndefined(height) ? "400px" : height + "px");
+    outer.style.width = xw.Sys.isDefined(width) ? (width + "px") : "400px"; // default width of 400px
+    outer.style.height = xw.Sys.isDefined(height) ? (height + "px") : "400px"; // default height of 400px
     outer.style.left = "0px";
     outer.style.right = "0px";
     outer.style.top = "0px";  
