@@ -548,7 +548,7 @@ xw.EL = {
   },
   destroyViewBindings: function(view) {
     for (var i = xw.EL.bindings.length - 1; i >= 0; i--) {
-      if (xw.EL.bindings[i].widget.view == view) {
+      if (xw.EL.bindings[i].widget.owner == view) {
         xw.EL.bindings.splice(i, 1);
       }
     }
@@ -996,12 +996,13 @@ xw.Controller = {
   // 
   // Opens a resource, such as a view or data module
   //
-  open: function(resource, params, container) {
+  open: function(resource, params, container, callback) {
     xw.Controller.queue.push({
       resource: resource, 
       params: params, 
       container: container, 
-      status: xw.Controller.QUEUE_STATUS_UNPROCESSED
+      status: xw.Controller.QUEUE_STATUS_UNPROCESSED,
+      callback: callback
     });
     xw.Controller.processQueue();
   },
@@ -1069,9 +1070,9 @@ xw.Controller = {
         var params = (xw.Sys.isDefined(item.params) && item.params !== null) ? item.params : {};
         
         if (def instanceof xw.ViewNode) {
-          xw.Controller.openView(item.resource, def, params, item.container);
+          xw.Controller.openView(item.resource, def, params, item.container, item.callback);
         } else if (def instanceof xw.DataModuleNode) {
-          xw.Controller.openDataModule(item.resource, def, params);
+          xw.Controller.openDataModule(item.resource, def, params, item.callback);
         }    
       }
     }  
@@ -1144,7 +1145,7 @@ xw.Controller = {
       }
     };
   },
-  openView: function(viewName, definition, params, c) {
+  openView: function(viewName, definition, params, c, callback) {
     // Determine the container control 
     var container = ("string" === (typeof c)) ? xw.Sys.getObject(c) : c;
     
@@ -1172,8 +1173,12 @@ xw.Controller = {
     xw.Controller.parseChildren(view, definition.children, view);
     xw.Controller.activeViews.push({container: container, view: view});
     view.render(container);
+    
+    if (typeof callback == "function") {
+      callback.call(view, view);
+    }
   },
-  openDataModule: function(dataModule, definition, params) {
+  openDataModule: function(dataModule, definition, params, callback) {
     var dm = new xw.DataModule();
     dm.dataModule = dataModule;
     dm.params = params;
@@ -1181,6 +1186,9 @@ xw.Controller = {
     xw.Controller.activeDataModules.push(dm);
     if (typeof dm.open == "function") {
       dm.open();
+    }
+    if (typeof callback == "function") {
+      callback.call(dm, dm);
     }
   },
   //
@@ -1651,7 +1659,12 @@ xw.Widget = xw.Class.extend({
     }
   },
   destroy: function() {
-    xw.EL.clearBindings(this);
+    xw.EL.clearWidgetBindings(this);
+    if (this.children) {
+      for (var i = this.children.length - 1; i >= 0; i--) {
+        this.children[i].destroy();
+      }
+    }
   },
   // Makes a cloned copy of the widget.  Any properties that contain
   // references to other widgets will not be cloned, they will just be
@@ -1930,13 +1943,47 @@ xw.DataModule = xw.NonVisual.extend({
 // GENERAL METHODS
 //
 
+//
 // Utility class for creating a modal dialog window
+// 
+// Valid option properties:
+//   params: Params to pass to the view to open
+//   title: The title of the popup window
+//   width: The fixed width of the popup window
+//   height: The fixed height of the popup window
+//   callback: The callback function to invoke after the view is opened
+//
 xw.Popup = {
   windowClass: "xwPopupWindow",
   titleClass: "xwPopupTitle",
   closeButtonClass: "xwPopupCloseButton",
   backgroundClass: "xwPopupBackground",
-  open: function(viewName, params, title, width, height) {
+  activeView: undefined,
+  open: function(viewName, options) {
+    var title = "";
+    var params, width, height, callback;
+
+    if (xw.Sys.isDefined(options)) {
+      if (options.title) {
+        title = options.title;
+      }
+      if (options.params) {
+        params = options.params;
+      }
+      
+      if (options.width) {
+        width = options.width;
+      }
+      
+      if (options.height) {
+        height = options.height;
+      }
+      
+      if (options.callback) {
+        callback = options.callback;
+      }
+    }
+  
     var bg = document.createElement("div");
     bg.style.zIndex = "101";
     bg.style.backgroundColor = "#000000";
@@ -2009,7 +2056,13 @@ xw.Popup = {
     
     inner.appendChild(contentDiv);
     
-    xw.open(viewName, params, contentDiv);
+    var cb = function(view) {
+      xw.Popup.activeView = view;
+      if (callback && typeof callback == "function") {
+        callback.call(view, view);
+      }
+    }
+    xw.open(viewName, params, contentDiv, cb);
 
     document.body.appendChild(bg);
     document.body.appendChild(outer);
@@ -2023,14 +2076,18 @@ xw.Popup = {
       document.body.removeChild(xw.Popup.background);
       xw.Popup.background = null;
     }
+    if (xw.Sys.isDefined(xw.Popup.activeView)) {
+      xw.Popup.activeView.destroy();
+      xw.Popup.activeView = undefined;
+    }
   }
 };
 
 //
 // Opens a resource (e.g. a view or data module) - this call is asynchronous
 //
-xw.open = function(viewName, params, container) {
-  xw.Controller.open(viewName, params, container);
+xw.open = function(viewName, params, container, callback) {
+  xw.Controller.open(viewName, params, container, callback);
 };
 
 // Walks through the DOM and scans for any view or datamodule nodes that should be opened

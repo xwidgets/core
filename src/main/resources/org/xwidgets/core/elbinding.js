@@ -23,5 +23,9 @@ org.xwidgets.core.ELBinding = xw.NonVisual.extend({
   },
   toString: function() {
     return "org.xwidgets.core.ELBinding[" + this.binding.value + "]";
+  },
+  destroy: function() {
+    xw.EL.unregisterResolver(this);
+    this._super();
   }
 });
