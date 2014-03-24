@@ -59,6 +59,9 @@ function package(fullName) {
 
 // XWidgets namespace
 var xw = {
+  // Global variables
+  basePath: null,
+  viewPath: null,
   // Constants
   CORE_NAMESPACE: "http://xwidgets.org/core",
   XHTML_NAMESPACE: "http://www.w3.org/1999/xhtml",
@@ -154,14 +157,13 @@ xw.Sys = {
     req.open("GET", url, true);
     req.send(null);
   },
-  basePath: null,
   getBasePath: function() {
-    if (xw.Sys.basePath === null) {
+    if (xw.basePath === null) {
       var scripts = document.getElementsByTagName('script');
       for (var i = 0; i < scripts.length; i++) {
         var match = scripts[i].src.match( /(^|.*[\\\/])xw.js(?:\?.*)?$/i );
         if (match) {
-          xw.Sys.basePath = match[1];
+          xw.basePath = match[1];
           break;
         }
       }
@@ -173,11 +175,11 @@ xw.Sys = {
         return "basePath" == expr;
       },
       resolve: function(expr) {
-        return "basePath" == expr ? xw.Sys.basePath : undefined;
+        return "basePath" == expr ? xw.basePath : undefined;
       }
     });
     
-    return xw.Sys.basePath;
+    return xw.basePath;
   },
   newInstance: function(name) {
     var current, parts, constructorName;
@@ -1114,9 +1116,10 @@ xw.Controller = {
   // Loads the view definition from the server
   //
   loadResource: function(resource) {
+    var path = xw.viewPath == null ? resource : (xw.viewPath + resource);    
     var req = xw.Sys.createHttpRequest("text/xml");
     req.onreadystatechange = function() { xw.Controller.loadResourceCallback(req, resource) };
-    req.open("GET", resource, true);
+    req.open("GET", path, true);
     req.send(null);
     return req;
   },
