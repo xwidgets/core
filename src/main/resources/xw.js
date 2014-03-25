@@ -1781,6 +1781,9 @@ xw.XHtml = xw.Visual.extend({
       this.control.className = value;
     } else if (attribName == "style") {
       this.control.style.cssText = value;
+    // TODO standardize attribute replacement
+    } else if (this.control.tagName.value == "label" && attribName == "for") {
+      this.control.htmlFor = value;
     } else {
       this.control[attribName] = value;
     }
@@ -1789,12 +1792,6 @@ xw.XHtml = xw.Visual.extend({
     return "xw.XHtml[" + this.tagName.value + "]"; 
   }
 });
-
-xw.XHtml.attributeMappings = {
-  label: {
-    for: "htmlFor"
-  }
-};
 
 // Represents plain ol' text
 xw.Text = xw.Visual.extend({
@@ -1969,6 +1966,7 @@ xw.DataModule = xw.NonVisual.extend({
 //
 xw.Popup = {
   windowClass: "xwPopupWindow",
+  contentClass: "xwPopupContent",
   titleClass: "xwPopupTitle",
   closeButtonClass: "xwPopupCloseButton",
   backgroundClass: "xwPopupBackground",
@@ -2067,6 +2065,10 @@ xw.Popup = {
     var contentDiv = document.createElement("div");
     contentDiv.style.overflowX = "auto";
     contentDiv.style.overflowY = "auto";
+    
+    if (xw.Popup.contentClass !== null) {
+      contentDiv.className = xw.Popup.contentClass;
+    }
     
     inner.appendChild(contentDiv);
     
