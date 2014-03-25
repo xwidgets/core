@@ -1212,7 +1212,7 @@ xw.Controller = {
         
         // Set the widget's attributes
         for (var p in c.attributes) {       
-            xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+          xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
         }
         
         widgets.push(widget);
@@ -1697,11 +1697,13 @@ xw.Widget = xw.Class.extend({
     o.parent = xw.Sys.isUndefined(parent) ? this.parent : parent;
     
     // Clone the children if there are any
-    if (this.children.length > 0) {
-      o.children = [];
-    
-      for (var i = 0; i < this.children.length; i++) {
-        o.children.push(this.children[i].clone(o));
+    if (xw.Sys.isDefined(this.children)) {
+      if (this.children.length > 0) {
+        o.children = [];
+      
+        for (var i = 0; i < this.children.length; i++) {
+          o.children.push(this.children[i].clone(o));
+        }
       }
     }
     return o;
