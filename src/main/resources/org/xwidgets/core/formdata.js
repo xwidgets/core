@@ -4,9 +4,7 @@ org.xwidgets.core.FormData = xw.NonVisual.extend({
     this._super();
     this.value = {};
   },
-  open: function() {
-
-  },
+  open: function() { },
   updateValue: function(name, value) {
     this.value[name] = value;
   },
