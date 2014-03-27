@@ -20,7 +20,7 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
       }
     }
     
-    xw.Ajax.get(url, function(response) { cb(response); });
+    xw.Ajax.get(url, function(response) { cb(response); }, false);
   },
   toString: function() {
     return "org.xwidgets.core.RestEndpoint[" + this.method.value + ":" + this.url + "]";

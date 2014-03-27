@@ -767,7 +767,7 @@ xw.Ajax = {
             r.onreadystatechange = function() {};
           }, 0);
           if (callback) {
-            if (xml) {
+            if (xml === true) {
               try {
                 r.responseXML.documentElement;
                 callback(r.responseXML);
@@ -791,20 +791,15 @@ xw.Ajax = {
     }
     return r;
   },
-  get: function(path, callback) {
-    var r = xw.Ajax.createRequestObject(callback);
+  get: function(path, callback, xml) {
+    var r = xw.Ajax.createRequestObject(callback, xml);
     r.open("GET", path, true);
     r.send();
   },
-  getXml: function(path, callback) {
-    var r = xw.Ajax.createRequestObject(callback, true);
-    r.open("GET", path, true);
-    r.send();
-  },
-  postXml: function(path, content, callback) {
-    var r = xw.Ajax.createRequestObject(callback, true);
+  post: function(path, callback, xml) {
+    var r = xw.Ajax.createRequestObject(callback, xml);
     r.open("POST", path, true);
-    r.send(content);
+    r.send();
   }
 };
 
@@ -1515,10 +1510,10 @@ xw.Action.prototype.invoke = function(callee, args) {
     __script += this.script;
     __script += "}";
     
-    var argNames = ["__registered", "params"];
+    var argNames = ["__registered", "params", "_owner"];
     // The actual argument array which will be passed to the function call
-    var a = [__registered, params];
-    
+    var a = [__registered, params, this.owner];
+
     for (var arg in args) {
       argNames.push(arg);
       a.push(args[arg]);
@@ -1833,10 +1828,10 @@ xw.Text = xw.Visual.extend({
 xw.Container = xw.Visual.extend({
   _constructor: function() {
     this._super(false);
+    
     // FIXME hard coded the layout for now
-    this.layout = new xw.BorderLayout();  
-  },
-  setLayout: function(layoutName) { }  
+    this.layout = new xw.BorderLayout();
+  }
 });
 
 //
@@ -1884,7 +1879,7 @@ xw.View = xw.Container.extend({
   },
   // Registers a named (i.e. having an "id" property) widget
   registerWidget: function(widget) {
-    this._registeredWidgets.push(widgets);
+    this._registeredWidgets.push(widget);
   },
   unregisterWidget: function(widget) {
     xw.Array.remove(this._registeredWidgets, widget);

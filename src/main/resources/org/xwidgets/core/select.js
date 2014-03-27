@@ -57,8 +57,9 @@ org.xwidgets.core.SelectItems = xw.Visual.extend({
 
 org.xwidgets.core.Select = xw.Visual.extend({
   _constructor: function() {
+    this.registerProperty("formData", {default: null});
     this.registerProperty("styleClass", {default: ""});
-    this.registerProperty("name");
+    this.registerProperty("name", {default: ""});
     this.control = null;
     this.objectValues = [];
   },
@@ -66,10 +67,31 @@ org.xwidgets.core.Select = xw.Visual.extend({
     if (this.control == null) {  
       this.control = document.createElement("select");
       this.control.className = this.styleClass.value;
-      container.appendChild(this.control);  
+      
+      if (this.name.value != null) {
+        this.control.name = this.name.value;
+      }
+
+      container.appendChild(this.control);
+      
+      var that = this;
+      var cb = function(evt) {
+        that.checkValueChanged.call(that, evt);
+      };
+      xw.Sys.chainEvent(this.control, "change", cb);
       
       this.renderChildren(this.control);
+      
+      if (this.formData.value != null) {
+        this.formData.value.updateValue(this.control.name, this.control.options[this.control.selectedIndex].value);
+      }
     }       
+  },
+  checkValueChanged: function(event) {
+    var value = this.control.options[this.control.selectedIndex].value;
+    if (this.formData.value != null) {
+      this.formData.value.updateValue(this.control.name, value);
+    }
   },
   addItem: function(value, label, obj) {
     var opt = document.createElement("option");
