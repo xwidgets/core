@@ -796,10 +796,11 @@ xw.Ajax = {
     r.open("GET", path, true);
     r.send();
   },
-  post: function(path, callback, xml) {
+  post: function(path, content, callback, xml) {
     var r = xw.Ajax.createRequestObject(callback, xml);
     r.open("POST", path, true);
-    r.send();
+    r.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    r.send(content);
   }
 };
 

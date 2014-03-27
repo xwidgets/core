@@ -7,7 +7,7 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
     this.registerProperty("method", {default: "GET"});
     this.registerProperty("callback");
   },
-  invoke: function(params, cb) {
+  invoke: function(params, content, cb) {
     if (xw.Sys.isUndefined(cb)) {
       cb = this.callback.value ? this.callback.value : function() {};
     }
@@ -20,7 +20,11 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
       }
     }
     
-    xw.Ajax.get(url, function(response) { cb(response); }, false);
+    if ("GET" === this.method.value) {
+      xw.Ajax.get(url, function(response) { cb(response); }, false);
+    } else if ("POST" === this.method.value) {
+      xw.Ajax.post(url, content, function(response) { cb(response); }, false);
+    }
   },
   toString: function() {
     return "org.xwidgets.core.RestEndpoint[" + this.method.value + ":" + this.url + "]";
