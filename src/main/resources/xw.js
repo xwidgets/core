@@ -752,6 +752,14 @@ xw.Event = {
 //
 
 xw.Ajax = {
+  loadingCallback: undefined,
+  activeRequests: 0,
+  setLoading: function(delta) {
+    xw.Ajax.activeRequests += delta;
+    if (xw.Sys.isDefined(xw.Ajax.loadingCallback) && typeof xw.Ajax.loadingCallback == "function") {
+      xw.Ajax.loadingCallback(xw.Ajax.activeRequests);
+    }
+  },
   createRequestObject: function(callback, xml) {
     var r;
     if (window.XMLHttpRequest) {
@@ -761,47 +769,62 @@ xw.Ajax = {
     }
     r.onreadystatechange = function() {
       if (r.readyState == 4) {
-        if (r.status == 200) {
-          // Done to avoid a memory leak
-          window.setTimeout(function() {
-            r.onreadystatechange = function() {};
-          }, 0);
-          if (callback) {
-            if (xml === true) {
-              try {
-                r.responseXML.documentElement;
-                callback(r.responseXML);
-              } catch (ex) {
+        try {
+          if (r.status == 200) {
+            // Done to avoid a memory leak
+            window.setTimeout(function() {
+              r.onreadystatechange = function() {};
+            }, 0);
+            if (callback) {
+              if (xml === true) {
                 try {
-                  var doc = new ActiveXObject("Microsoft.XMLDOM");
-                  doc.async = "false";
-                  doc.loadXML(r.responseText);
-                  callback(doc);
-                } catch (e) {
-                  var p = new DOMParser();
-                  callback(parser.parseFromString(r.responseText, "text/xml"));
+                  r.responseXML.documentElement;
+                  callback(r.responseXML);
+                } catch (ex) {
+                  try {
+                    var doc = new ActiveXObject("Microsoft.XMLDOM");
+                    doc.async = "false";
+                    doc.loadXML(r.responseText);
+                    callback(doc);
+                  } catch (e) {
+                    var p = new DOMParser();
+                    callback(parser.parseFromString(r.responseText, "text/xml"));
+                  }
                 }
+              } else {
+                callback(r.responseText);
               }
-            } else {
-              callback(r.responseText);
             }
           }
+        } finally {
+          xw.Ajax.setLoading(-1);
         }
       }
     }
     return r;
   },
   get: function(path, callback, xml) {
-    var r = xw.Ajax.createRequestObject(callback, xml);
-    r.open("GET", path, true);
-    r.send();
+    xw.Ajax.setLoading(1);
+    try {
+      var r = xw.Ajax.createRequestObject(callback, xml);
+      r.open("GET", path, true);
+      r.send();
+    } catch (e) {
+      xw.Ajax.setLoading(-1);
+    }
   },
   post: function(path, content, callback, xml) {
-    var r = xw.Ajax.createRequestObject(callback, xml);
-    r.open("POST", path, true);
-    r.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-    r.send(content);
-  }
+    xw.Ajax.setLoading(1);
+    try {
+      var r = xw.Ajax.createRequestObject(callback, xml);
+      r.open("POST", path, true);
+      r.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+      r.send(content);
+    } catch (e) {
+      xw.Ajax.setLoading(-1);    
+    }
+  },
+  
 };
 
 xw.ViewNode = function(children) {
