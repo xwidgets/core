@@ -1263,9 +1263,7 @@ xw.Controller = {
         
         // Set the widget's attributes
         for (var p in c.attributes) { 
-          if (xw.EL.isExpression(c.attributes[p])) {
-            xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
-          }
+          xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
         }
               
         widgets.push(widget);

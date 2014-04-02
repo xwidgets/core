@@ -2,6 +2,7 @@ package("org.xwidgets.core");
 
 org.xwidgets.core.Button = xw.Visual.extend({
   _constructor: function() {
+    this._super();
     this.registerProperty("label", {default: ""});
     this.registerProperty("styleClass");
     this.registerEvent("onclick");
@@ -26,5 +27,11 @@ org.xwidgets.core.Button = xw.Visual.extend({
     if (this.textNode !== null) {
       this.textNode.data = this.label === null ? "" : this.label;
     }  
+  },
+  disable: function(value) {
+    this.control.disabled = true;
+  },
+  enable: function(value) {
+    this.control.disabled = false;
   }
 });
