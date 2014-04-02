@@ -770,7 +770,7 @@ xw.Ajax = {
     r.onreadystatechange = function() {
       if (r.readyState == 4) {
         try {
-          if (r.status == 200) {
+          if (r.status >= 200 && r.status <= 299) {
             // Done to avoid a memory leak
             window.setTimeout(function() {
               r.onreadystatechange = function() {};
