@@ -237,6 +237,10 @@ org.xwidgets.core.Tree = xw.Visual.extend({
     this.rootVisible = visible;
   },
   render: function(container) {
+    if (this.model == null) {
+      
+    }
+  
     this.renderer.render(this, container, this.model.getRoot(), true);
   },
   repaintNode: function(node) {

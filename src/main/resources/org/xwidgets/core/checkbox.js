@@ -2,6 +2,7 @@ package("org.xwidgets.core");
 
 org.xwidgets.core.Checkbox = xw.Visual.extend({
   _constructor: function() {
+    this._super();
     this.registerProperty("styleClass", {default: ""});
     this.registerProperty("name", {default: ""});
     this.registerProperty("formData", {default: null});
@@ -36,6 +37,11 @@ org.xwidgets.core.Checkbox = xw.Visual.extend({
   },
   getValue: function() {
     return this.value.value;
+  },
+  focus: function() {
+    if (this.control != null) {
+      this.control.focus();
+    }
   },
   destroy: function() {
     this._super();

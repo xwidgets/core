@@ -61,7 +61,7 @@ function package(fullName) {
 var xw = {
   // Global variables
   basePath: null,
-  viewPath: null,
+  viewPath: "views/",
   // Constants
   CORE_NAMESPACE: "http://xwidgets.org/core",
   XHTML_NAMESPACE: "http://www.w3.org/1999/xhtml",
@@ -1741,7 +1741,7 @@ xw.Visual = xw.Widget.extend({
         if (xw.Sys.isUndefined(this.children[i].render)) {
           throw "Error - widget [" + this.children[i] + "] extending xw.Visual does not provide a render() method";
         } else {
-          this.children[i].render(container);       
+          this.children[i].render.call(this.children[i], container);       
         }
       } else if (this.children[i] instanceof xw.NonVisual) {     
         if (typeof this.children[i].open == "function") {
@@ -1893,7 +1893,7 @@ xw.View = xw.Container.extend({
     this.renderChildren(this.container);
     
     if (xw.Sys.isDefined(this.afterRender)) {
-      this.afterRender.invoke();
+      this.afterRender.invoke(this);
     }
   },
   appendChild: function(child) {
@@ -1947,7 +1947,7 @@ xw.DataModule = xw.NonVisual.extend({
   open: function() {
     this.openChildren();    
     if (xw.Sys.isDefined(this.afterOpen)) {
-      this.afterOpen.invoke();
+      this.afterOpen.invoke(this);
     }
   },
   // Registers a named (i.e. having an "id" property) widget

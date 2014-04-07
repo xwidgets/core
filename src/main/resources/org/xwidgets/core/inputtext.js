@@ -2,6 +2,7 @@ package("org.xwidgets.core");
 
 org.xwidgets.core.InputText = xw.Visual.extend({
   _constructor: function() {
+    this._super();
     this.registerProperty("name", {default: null});
     this.registerProperty("value", {default: null});
     this.registerProperty("formData", {default: null});
@@ -44,6 +45,11 @@ org.xwidgets.core.InputText = xw.Visual.extend({
     this.value.value = value;
     if (this.control != null) {
       this.control.value = this.value.value;
+    }
+  },
+  focus: function() {
+    if (this.control != null) {
+      this.control.focus();
     }
   },
   toString: function() {

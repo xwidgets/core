@@ -2,6 +2,7 @@ package("org.xwidgets.core");
 
 org.xwidgets.core.SelectItem = xw.Visual.extend({
   _constructor: function() {
+    this._super();
     this.registerProperty("itemValue", {default: null});
     this.registerProperty("itemLabel", {default: null});
     this.rendered = false;
@@ -12,10 +13,11 @@ org.xwidgets.core.SelectItem = xw.Visual.extend({
       this.rendered = true;
     }
   }
-}); 
+});
 
 org.xwidgets.core.SelectItems = xw.Visual.extend({
   _constructor: function() {
+    this._super();
     this.registerProperty("value", {default: null}); 
     this.registerProperty("var", {default: null});
     this.registerProperty("itemValue", {default: null});
@@ -57,6 +59,7 @@ org.xwidgets.core.SelectItems = xw.Visual.extend({
 
 org.xwidgets.core.Select = xw.Visual.extend({
   _constructor: function() {
+    this._super();
     this.registerProperty("formData", {default: null});
     this.registerProperty("styleClass", {default: ""});
     this.registerProperty("name", {default: ""});
@@ -114,6 +117,11 @@ org.xwidgets.core.Select = xw.Visual.extend({
       }
     }
     return undefined;
+  },
+  focus: function() {
+    if (this.control != null) {
+      this.control.focus();
+    }
   },
   toString: function() {
     return "org.xwidgets.core.Select[" + this.id.value + "]";
