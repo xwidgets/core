@@ -4,7 +4,7 @@ org.xwidgets.core.TreeNode = function(value, leaf, userObject) {
   this.value = value;
   this.leaf = leaf ? leaf : false;
   this.userObject = userObject ? userObject : null;
-  this.children = new Array();
+  this.children = [];
   this.parent = null;
   this.expanded = false;
   this.model = null;
@@ -238,10 +238,18 @@ org.xwidgets.core.Tree = xw.Visual.extend({
   },
   render: function(container) {
     if (this.model == null) {
-      
+      // If there is no model defined, create a default one with an empty root node
+      this.rootVisible = false;
+      this.model = new org.xwidgets.core.TreeModel(new org.xwidgets.core.TreeNode());
     }
-  
-    this.renderer.render(this, container, this.model.getRoot(), true);
+
+    if (this.rootVisible) {
+      this.renderer.render(this, container, this.model.getRoot(), true);
+    } else {
+      for (var i = 0; i < this.model.getRoot().children.length; i++) {
+        this.renderer.render(this, container, this.model.getRoot().children[i], true);
+      }
+    }
   },
   repaintNode: function(node) {
     this.renderer.render(this, null, node, true);

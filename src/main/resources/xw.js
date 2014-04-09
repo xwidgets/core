@@ -1736,6 +1736,7 @@ xw.Widget = xw.Class.extend({
 xw.Visual = xw.Widget.extend({
   _constructor: function() {
     this._super(false);
+    this.registerEvent("afterRender");
   },
   renderChildren: function(container) {
     var i;
@@ -1744,7 +1745,10 @@ xw.Visual = xw.Widget.extend({
         if (xw.Sys.isUndefined(this.children[i].render)) {
           throw "Error - widget [" + this.children[i] + "] extending xw.Visual does not provide a render() method";
         } else {
-          this.children[i].render.call(this.children[i], container);       
+          this.children[i].render.call(this.children[i], container);         
+          if (xw.Sys.isDefined(this.children[i].afterRender)) {
+            this.children[i].afterRender.invoke(this.children[i]);
+          }                    
         }
       } else if (this.children[i] instanceof xw.NonVisual) {     
         if (typeof this.children[i].open == "function") {
@@ -1867,7 +1871,6 @@ xw.View = xw.Container.extend({
     this._super(false);
     this.registerProperty("viewName");
     this.registerProperty("params");
-    this.registerEvent("afterRender");
     // The container control
     this.container = null;  
     this._registeredWidgets = [];  
