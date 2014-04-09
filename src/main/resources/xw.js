@@ -979,7 +979,7 @@ xw.DefinitionParser.prototype.parseEvent = function(e) {
     var child = e.childNodes.item(i);
 
     if (child.nodeType === 1 && 
-        child.namespaceURI === xw.CORE_NAMESPACE && 
+        child.namespaceURI === xw.CORE_NAMESPACE &&
         child.localName === "action" && 
         child.getAttribute("type") === "script") {
       // get all the text content of the action node, textContent would be easier but IE doesn't support that
@@ -994,6 +994,9 @@ xw.DefinitionParser.prototype.parseEvent = function(e) {
         }
       }
       return new xw.EventNode(eventType, script);
+    // Otherwise if the child is a CDATA section assume it's a script
+    } else if (child.nodeType === 4) {
+      return new xw.EventNode(eventType, child.nodeValue);
     }
   }
 };
