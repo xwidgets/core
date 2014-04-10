@@ -30,6 +30,9 @@ org.xwidgets.core.TreeNode = function(value, leaf, userObject) {
     node.parent = this;
     this.children.push(node);
     node.setModel(this.model);
+    if (this.model.tree) {
+      this.model.tree.renderer.renderNode(node);   
+    }
   }
 
   p.children = function() {
@@ -75,11 +78,15 @@ org.xwidgets.core.TreeNode = function(value, leaf, userObject) {
   }
 };
 
-org.xwidgets.core.TreeModel = function(rootNode) {
-  this.rootNode = rootNode;
-  this.rootNode.setModel(this);
-  this.tree = null;
+org.xwidgets.core.TreeModel = function(tree) {
+  this.rootNodes = [];
+  this.tree = tree;
   var p = org.xwidgets.core.TreeModel.prototype;
+  
+  p.addRootNode = function(node) {
+    this.rootNodes.push(node);
+    this.tree.renderer.renderNode(node);
+  }
   
   p.getChild = function(parent, index) {
     return parent.getChildAt(index);
@@ -91,10 +98,6 @@ org.xwidgets.core.TreeModel = function(rootNode) {
 
   p.getIndexOfChild = function(parent, child) {
     return parent.getIndex(child);
-  }
-
-  p.getRoot = function() {
-    return this.rootNode;
   }
 
   p.isLeaf = function(node) {
@@ -223,32 +226,17 @@ org.xwidgets.core.TreeUtil = {
 
 org.xwidgets.core.Tree = xw.Visual.extend({
   _constructor: function() {
-    this.rootVisible = false;  
-    this.model = null;
-    this.renderer = new org.xwidgets.core.DefaultTreeRenderer();
+    this.model = new org.xwidgets.core.TreeModel(this);
+    this.renderer = new org.xwidgets.core.DefaultTreeRenderer(this);
     this.onSelect = null;
     this.onDragDrop = null;
     this.selectedNode = null;
-  },
-  isRootVisible: function() {
-    return this.rootVisible;
-  },
-  setRootVisible: function(visible) {
-    this.rootVisible = visible;
+    this.container = null;
   },
   render: function(container) {
-    if (this.model == null) {
-      // If there is no model defined, create a default one with an empty root node
-      this.rootVisible = false;
-      this.model = new org.xwidgets.core.TreeModel(new org.xwidgets.core.TreeNode());
-    }
-
-    if (this.rootVisible) {
-      this.renderer.render(this, container, this.model.getRoot(), true);
-    } else {
-      for (var i = 0; i < this.model.getRoot().children.length; i++) {
-        this.renderer.render(this, container, this.model.getRoot().children[i], true);
-      }
+    this.container = container;
+    for (var i = 0; i < this.model.rootNodes.length; i++) {
+      this.renderer.render(this, container, this.model.rootNodes[i], true);
     }
   },
   repaintNode: function(node) {
@@ -388,7 +376,8 @@ org.xwidgets.core.Tree.onMouseOut = function(event, node) {
   }
 };
 
-org.xwidgets.core.DefaultTreeRenderer = function() {
+org.xwidgets.core.DefaultTreeRenderer = function(tree) {
+  this.tree = tree;
   this.plusStartClass = "treePlusStart";
   this.plusMiddleClass = "treePlusMiddle";
   this.plusEndClass = "treePlusEnd";
@@ -414,7 +403,15 @@ org.xwidgets.core.DefaultTreeRenderer.prototype.removeNode = function(node) {
   node.parent.childrenCell.removeChild(node.tableCtl);
 };
 
-org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(tree, container, node, renderChildren) {
+org.xwidgets.core.DefaultTreeRenderer.prototype.renderNode = function(node) {
+  if (node.parent == null) {
+    this.render(this.tree.container, node, true);
+  } else {
+    this.render(node.parent.childrenCell, node, true);
+  }
+};
+
+org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(container, node, renderChildren) {
   if (!node.tableCtl) {
     node.renderer = this;
 
@@ -497,7 +494,7 @@ org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(tree, containe
 
   if (!node.isLeaf() && renderChildren) {
     for (var i = 0; i < node.getChildCount(); i++) {
-      this.render(tree, node.childrenCell, node.getChildAt(i), true);
+      this.render(node.childrenCell, node.getChildAt(i), true);
     }
   }
 
@@ -545,7 +542,7 @@ org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(tree, containe
   }
 
   if (node.getParent()) {
-    node.renderer.render(tree, null, node.getParent());
+    node.renderer.render(null, node.getParent());
   }
 
   if (this.onRender) {
