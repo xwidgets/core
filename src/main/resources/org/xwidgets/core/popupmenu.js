@@ -19,11 +19,13 @@ org.xwidgets.core.PopupMenu = xw.Visual.extend({
       }
       
       container.appendChild(this.control);      
+      this.renderChildren(this.control);
     }
   },
   popup: function() {
-    this.renderChildren(this.control);
     this.control.style.display = "block";
+    org.xwidgets.core.PopupMenu.openMenu = this;
+    xw.Sys.chainEvent(document.body, "mousedown", org.xwidgets.core.PopupMenu.documentMouseDown);
   },
   trackMouseOver: function(menuItem) {
     if (menuItem != this.mouseOverItem) {
@@ -95,8 +97,8 @@ org.xwidgets.core.PopupMenu = xw.Visual.extend({
     
       this.selectedMenuItem = null;
     }
+    this.control.style.display = "none";
   }
-
 });
 
 org.xwidgets.core.PopupMenu.openMenu = null;

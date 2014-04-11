@@ -381,8 +381,8 @@ org.xwidgets.core.Tree.onMouseOut = function(event, node) {
 };
 
 org.xwidgets.core.Tree.onContextMenu = function(event, node) {
-  if (node.model.tree.popupMenu) {
-    popupMenu.popup();
+  if (node.model.tree.popupMenu.value) {
+    node.model.tree.popupMenu.value.popup();
   }
   
   event.preventDefault();
