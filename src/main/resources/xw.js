@@ -1358,7 +1358,7 @@ xw.WidgetManager = {
         if (!xw.Sys.classExists(fqwn)) {        
           for (var i = 0; i < parents.length; i++) {
             if (!xw.Sys.classExists(parents[i])) {
-              break outer;
+              continue outer;
             }
           }
         

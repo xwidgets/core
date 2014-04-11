@@ -229,6 +229,7 @@ org.xwidgets.core.Tree = xw.Visual.extend({
   _constructor: function() {
     this.model = new org.xwidgets.core.TreeModel(this);
     this.renderer = new org.xwidgets.core.DefaultTreeRenderer(this);
+    this.registerProperty("popupMenu", {default: undefined});
     this.onSelect = null;
     this.onDragDrop = null;
     this.selectedNode = null;
@@ -380,7 +381,10 @@ org.xwidgets.core.Tree.onMouseOut = function(event, node) {
 };
 
 org.xwidgets.core.Tree.onContextMenu = function(event, node) {
-
+  if (node.model.tree.popupMenu) {
+    popupMenu.popup();
+  }
+  
   event.preventDefault();
 };
 
