@@ -122,6 +122,7 @@ xw.Sys = {
   //   failCallback = the callback function to invoke if loading failed
   //
   loadSource: function(url, callback, failCallback) {
+    xw.Log.debug("xw.Sys: Loading source [" + url + "]");
     var req = xw.Sys.createHttpRequest("text/plain");
     req.onreadystatechange = function() {
       if (req.readyState === 4) {
@@ -409,7 +410,7 @@ xw.Log = {
     ERROR: 400,
     OFF: 500
   },
-  logLevel: "OFF",
+  logLevel: "ERROR",
   append: function(text, logLevel) {
     var msg = {
       text : text,
@@ -1021,6 +1022,7 @@ xw.Controller = {
   // Opens a resource, such as a view or data module
   //
   open: function(resource, params, container, callback) {
+    xw.Log.debug("xw.Controller: Opening resource [" + resource + "]");
     xw.Controller.queue.push({
       resource: resource, 
       params: params, 
@@ -1122,7 +1124,10 @@ xw.Controller = {
              invalid[fqwn] = {parents:[]};
            }
          
+           // Populate this so that we can always load the parent widgets
+           // first - (don't add if the widget is its own parent!)
            if (parent != null && xw.Sys.isDefined(parent.fqwn) && 
+               parent.fqwn != fqwn &&
                !xw.Array.contains(invalid[fqwn].parents, parent.fqwn)) {
              invalid[fqwn].parents.push(parent.fqwn);
            }
@@ -1138,6 +1143,7 @@ xw.Controller = {
   // Loads the view definition from the server
   //
   loadResource: function(resource) {
+    xw.Log.debug("xw.Controller: Loading resource [" + resource + "]");
     var path = xw.viewPath == null ? resource : (xw.viewPath + resource);    
     var req = xw.Sys.createHttpRequest("text/xml");
     req.onreadystatechange = function() { xw.Controller.loadResourceCallback(req, resource) };
@@ -1171,6 +1177,7 @@ xw.Controller = {
     };
   },
   openView: function(viewName, definition, params, c, callback) {
+    xw.Log.debug("xw.Controller: Opening view [" + viewName + "]");
     // Determine the container control 
     var container = ("string" === (typeof c)) ? xw.Sys.getObject(c) : c;
     
@@ -1204,6 +1211,7 @@ xw.Controller = {
     }
   },
   openDataModule: function(dataModule, definition, params, callback) {
+    xw.Log.debug("xw.Controller: Opening data module [" + dataModule + "]");
     var dm = new xw.DataModule();
     dm.dataModule = dataModule;
     dm.params = params;
@@ -1310,6 +1318,14 @@ xw.WidgetManager = {
   // the specified container 
   //
   loadWidgets: function(widgets) {
+    var wl = "";
+    for (var fqwn in widgets) {
+      if (wl.length > 0) {
+        wl += ", ";
+      }
+      wl += fqwn;
+    }
+    xw.Log.debug("xw.WidgetManager: Loading widgets [" + wl + "]");
     var i;
     var wm = xw.WidgetManager;
     

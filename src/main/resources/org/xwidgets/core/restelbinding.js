@@ -16,15 +16,15 @@ org.xwidgets.core.RestELBinding = xw.NonVisual.extend({
   restCallback: function(result) {
     if ("JSON" == this.mode.value) {
       result = JSON.parse(result);
-    } 
-        
+    }
+
     if (xw.Sys.isDefined(this.onresult)) {
       result = this.onresult.invoke(this, {result:result});
-    } 
+    }
 
     this.value = result;
-       
-    xw.EL.notify(this.binding.value);  
+
+    xw.EL.notify(this.binding.value);
   },
   canResolve: function(expr) {
     return expr == this.binding.value;

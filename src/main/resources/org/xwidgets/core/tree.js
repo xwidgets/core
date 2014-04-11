@@ -292,11 +292,13 @@ org.xwidgets.core.Tree.targetNode = null;
 // Global tree methods
 
 org.xwidgets.core.Tree.onMouseDown = function(event, node) {
-  org.xwidgets.core.Tree.mouseDownStartPos = org.xwidgets.core.TreeUtil.getMousePos(event);
-  org.xwidgets.core.Tree.mouseDownNode = node;
-  
-  xw.Sys.chainEvent(document, "mousemove", org.xwidgets.core.Tree.onMouseMove);
-  xw.Sys.chainEvent(document, "mouseup", org.xwidgets.core.Tree.onMouseUp);
+  if (event.which == 1) {
+    org.xwidgets.core.Tree.mouseDownStartPos = org.xwidgets.core.TreeUtil.getMousePos(event);
+    org.xwidgets.core.Tree.mouseDownNode = node;
+    
+    xw.Sys.chainEvent(document, "mousemove", org.xwidgets.core.Tree.onMouseMove);
+    xw.Sys.chainEvent(document, "mouseup", org.xwidgets.core.Tree.onMouseUp);
+  }
 
   // Prevent the default browser behaviour (of selecting text)
   xw.Sys.cancelEventBubble(event);
@@ -375,6 +377,11 @@ org.xwidgets.core.Tree.onMouseOut = function(event, node) {
       t.targetNode = null;
     }
   }
+};
+
+org.xwidgets.core.Tree.onContextMenu = function(event, node) {
+
+  event.preventDefault();
 };
 
 org.xwidgets.core.DefaultTreeRenderer = function(tree) {
@@ -463,6 +470,10 @@ org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(container, nod
     node.childrenCell.colSpan = 2;
     
     var t = org.xwidgets.core.Tree;
+    
+    var contextMenuFunction = function(event) { t.onContextMenu(event, node); };
+    xw.Sys.chainEvent(node.iconDiv, "contextmenu", contextMenuFunction);
+    xw.Sys.chainEvent(node.contentCell, "contextmenu", contextMenuFunction);
 
     var mouseDownFunction = function(event) { t.onMouseDown(event, node); };
     xw.Sys.chainEvent(node.iconDiv, "mousedown", mouseDownFunction);
@@ -474,7 +485,7 @@ org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(container, nod
 
     var mouseOutFunction = function(event) { t.onMouseOut(event, node); };
     xw.Sys.chainEvent(node.iconDiv, "mouseout", mouseOutFunction);
-    xw.Sys.chainEvent(node.contentCell, "mouseout", mouseOutFunction);
+    xw.Sys.chainEvent(node.contentCell, "mouseout", mouseOutFunction);    
   }
 
   node.contentText.nodeValue = node.value;
