@@ -85,6 +85,7 @@ org.xwidgets.core.TreeModel = function(tree) {
   
   p.addRootNode = function(node) {
     this.rootNodes.push(node);
+    node.model = this;
     this.tree.renderer.renderNode(node);
   }
   
@@ -266,7 +267,7 @@ org.xwidgets.core.Tree = xw.Visual.extend({
   },
   moveNode: function(sourceNode, targetNode) {
     var sourceParent = sourceNode.getParent();
-    if (sourceParent != targetNode) {
+    if (sourceParent != null && sourceParent != targetNode) {
       sourceParent.remove(sourceNode);
 
       targetNode.add(sourceNode);
