@@ -22,8 +22,13 @@ org.xwidgets.core.PopupMenu = xw.Visual.extend({
       this.renderChildren(this.control);
     }
   },
-  popup: function() {
+  popup: function(event) {
+    this.control.style.left = (event.clientX + 8) + "px";    
+    this.control.style.visibility = "hidden";
     this.control.style.display = "block";
+    var top = (event.clientY - Math.min(this.control.clientHeight / 2));
+    this.control.style.top = top < 0 ? "0px" : top + "px";
+    this.control.style.visibility = "";
     org.xwidgets.core.PopupMenu.openMenu = this;
     xw.Sys.chainEvent(document.body, "mousedown", org.xwidgets.core.PopupMenu.documentMouseDown);
   },
