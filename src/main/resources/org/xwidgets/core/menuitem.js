@@ -134,22 +134,7 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
         }
         
         c.style.position = "absolute";
-        c.style.zIndex = 10;
-        
-        var rect = this.control.getBoundingClientRect();        
-
-        if (this.parent instanceof org.xwidgets.core.MenuItem) {
-          var containerRect = this.parent.submenuContainer.getBoundingClientRect();
-          c.style.top = rect.top + "px";
-          c.style.left = (containerRect.right + 1) + "px";
-        } else if (this.parent instanceof org.xwidgets.core.PopupMenu) {
-          var containerRect = this.parent.control.getBoundingClientRect();
-          c.style.top = rect.top + "px";
-          c.style.left = (containerRect.right + 1) + "px";                
-        } else {
-          c.style.top = (rect.bottom + 1) + "px";
-          c.style.left = rect.left + "px";
-        }
+        c.style.zIndex = 10;       
         c.style.overflow = "hidden";
         
         this.renderChildren(c);
@@ -157,6 +142,22 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
         document.body.appendChild(c);
         this.submenuContainer = c; 
       }
+      
+      var rect = this.control.getBoundingClientRect();        
+
+      if (this.parent instanceof org.xwidgets.core.MenuItem) {
+        var containerRect = this.parent.submenuContainer.getBoundingClientRect();
+        c.style.top = rect.top + "px";
+        c.style.left = (containerRect.right + 1) + "px";
+      } else if (this.parent instanceof org.xwidgets.core.PopupMenu) {
+        var containerRect = this.parent.control.getBoundingClientRect();
+        c.style.top = rect.top + "px";
+        c.style.left = (containerRect.right + 1) + "px";                
+      } else {
+        c.style.top = (rect.bottom + 1) + "px";
+        c.style.left = rect.left + "px";
+      }
+      
       this.submenuContainer.style.display = "";
     }
     if (xw.Sys.isDefined(this.selectedStyleClass.value)) {

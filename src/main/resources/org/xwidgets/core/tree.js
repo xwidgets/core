@@ -260,6 +260,15 @@ org.xwidgets.core.Tree = xw.Visual.extend({
     if (this.onSelect) {
       this.onSelect(node);
     }
+    
+    var n = node;
+    while (n.parent != null) {
+      if (!n.parent.expanded) {
+        n.parent.expanded = true;
+        this.renderer.toggle(n.parent);
+      }
+      n = n.parent;
+    }
   },
   initiateDragDrop: function(sourceNode, targetNode) {
     if ((this.onDragDrop && this.onDragDrop(sourceNode, targetNode)) || !this.onDragDrop) {
