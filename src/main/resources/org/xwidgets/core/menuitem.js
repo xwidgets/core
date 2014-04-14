@@ -25,7 +25,8 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
       this.submenuContainer.parentNode.removeChild(this.submenuContainer);
       this.submenuContainer = null;
     }
-    this.children = this.parseDefinition(def, this);    
+    this.children = this.parseDefinition(def, this);
+    this.propagateChildProperty(org.xwidgets.core.MenuItem, "menu", this.menu);
   },
   parseDefinition: function(nodes, parent) {
     var items = [];
@@ -39,7 +40,6 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
       
       items.push(mi);
     }
-    
     return items;
   },
   render: function(container) {
@@ -92,31 +92,24 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     }
   },
   click: function(event) {
-    var m = this.getMenuBar();
-    m.selectItem(this);
     if (this.children.length == 0) {
       if (this.onclick) {
-        m.close();
-        this.onclick.invoke(m);
-      } else if (m && m.onclick) {
-        m.close();
-        m.onclick.invoke(m, {item: this});
+        this.menu.close();
+        this.onclick.invoke(this.menu);
+      } else if (this.menu.onclick) {
+        this.menu.close();
+        this.menu.onclick.invoke(this.menu, {item: this});
       }
+    } else {
+      this.menu.selectItem(this);    
     }
     xw.Sys.cancelEventBubble(event);
   },
   mouseOver: function(event) {
-    if (this.getMenuBar().isOpen()) {
-      this.getMenuBar().trackMouseOver(this);
+    if (this.menu.isOpen()) {
+      org.xwidgets.core.MenuItem.trackMouseOver(this);
     }
     xw.Sys.cancelEventBubble(event);
-  },
-  getMenuBar: function() {
-    var p = this.parent;
-    while (!(p instanceof org.xwidgets.core.MenuBar) && xw.Sys.isDefined(p)) {
-      p = p.parent;
-    }
-    return p;
   },
   select: function() {
     if (this.children.length > 0) {
@@ -132,13 +125,17 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
         
         var rect = this.control.getBoundingClientRect();        
 
-        if (this.parent instanceof org.xwidgets.core.MenuBar) {
-          c.style.top = (rect.bottom + 1) + "px";  
-          c.style.left = rect.left + "px";
-        } else {
+        if (this.parent instanceof org.xwidgets.core.MenuItem) {
           var containerRect = this.parent.submenuContainer.getBoundingClientRect();
           c.style.top = rect.top + "px";
           c.style.left = (containerRect.right + 1) + "px";
+        } else if (this.parent instanceof org.xwidgets.core.PopupMenu) {
+          var containerRect = this.parent.control.getBoundingClientRect();
+          c.style.top = rect.top + "px";
+          c.style.left = (containerRect.right + 1) + "px";                
+        } else {
+          c.style.top = (rect.bottom + 1) + "px";
+          c.style.left = rect.left + "px";
         }
         c.style.overflow = "hidden";
         
@@ -162,3 +159,39 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     }
   }
 });
+
+org.xwidgets.core.MenuItem.mouseOverItem = null;
+org.xwidgets.core.MenuItem.mouseOverTimeout = null;
+
+org.xwidgets.core.MenuItem.trackMouseOver = function(menuItem) {
+  var mi = org.xwidgets.core.MenuItem;
+
+  if (menuItem != mi.mouseOverItem) {
+    // Unselect the currently selected item
+    if (mi.mouseOverItem != null) {
+      mi.mouseOverItem.unselect();
+    }
+  
+    // Clear the existing timeout function if it's set
+    if (mi.mouseOverTimeout) {
+      clearTimeout(mi.mouseOverTimeout);
+      mi.mouseOverTimeout = null;
+    }
+    
+    // Set the new item
+    mi.mouseOverItem = menuItem;
+    
+    // Create a new timeout
+    var cb = function() {
+      mi.mouseOverCallback(menuItem);      
+    }
+    mi.mouseOverTimeout = setTimeout(cb, 300);
+  }
+};
+  
+org.xwidgets.core.MenuItem.mouseOverCallback = function(menuItem) {
+  var mi = org.xwidgets.core.MenuItem;
+  if (menuItem == mi.mouseOverItem && menuItem != menuItem.menu.selectedMenuItem) {
+    menuItem.menu.selectItem(menuItem);
+  }
+};

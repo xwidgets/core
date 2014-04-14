@@ -1679,6 +1679,20 @@ xw.Widget = xw.Class.extend({
     }
     this[name] = new xw.Property(this, name, options);
   },
+  // Sets the property value of all child nodes of a specified type
+  propagateChildProperty: function(cls, propName, val) {
+    var f = function(p) {
+      if (xw.Sys.isDefined(p.children)) {
+        for (var i = 0; i < p.children.length; i++) {
+          if (p.children[i] instanceof cls) {
+            xw.Sys.setObjectProperty(p.children[i], propName, val);
+          }
+          f(p.children[i]);
+        }
+      }
+    }
+    f(this);
+  },
   addEvent: function(control, eventName, event) {     
     if (xw.Sys.isDefined(this["on" + eventName]) && xw.Sys.isDefined(event)) {        
       var sender = this;
