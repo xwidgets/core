@@ -1,5 +1,18 @@
 package("org.xwidgets.core");
 
+org.xwidgets.core.MenuDivider = xw.Visual.extend({
+  _constructor: function() {
+    this._super();
+    this.control = null;
+  },
+  render: function(container) {
+    if (this.control == null) {
+      this.control = document.createElement("hr");
+      container.appendChild(this.control);
+    }
+  }
+});
+
 org.xwidgets.core.MenuItem = xw.Visual.extend({
   _constructor: function(label) {
     this._super();
