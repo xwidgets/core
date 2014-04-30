@@ -689,7 +689,11 @@ xw.EL = {
     
     var value = root;
     for (var i = 1; i < parts.length; i++) {
-      value = value[parts[i]];
+      if (xw.Sys.isUndefined(value) || value == null) {
+        break;
+      } else {
+        value = value[parts[i]];
+      }
     }
     return invert ? !value : value;  
   },
@@ -824,8 +828,7 @@ xw.Ajax = {
     } catch (e) {
       xw.Ajax.setLoading(-1);    
     }
-  },
-  
+  }
 };
 
 xw.ViewNode = function(children) {
