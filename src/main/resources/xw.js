@@ -914,7 +914,7 @@ xw.DefinitionParser.prototype.getFQCN = function(e) {
       fp += "/";
     }
   }
-  if (typeof uri.directoryPath == "string" && uri.directory.Path.length > 0) {
+  if (typeof uri.directoryPath == "string" && uri.directoryPath.length > 0) {
     fp += uri.directoryPath + xw.Sys.capitalize(e.localName);
   } else {
     fp += "/" + xw.Sys.capitalize(e.localName);
