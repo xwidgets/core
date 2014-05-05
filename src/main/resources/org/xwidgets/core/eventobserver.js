@@ -3,9 +3,8 @@ package("org.xwidgets.core");
 org.xwidgets.core.EventObserver = xw.NonVisual.extend({
   _constructor: function() {
     this._super();
-    this.registerProperty("event", null);
-    this.registerEvent("onFire", null);
-    
+    this.registerProperty("event", {default:null});
+    this.registerEvent("onfire");
     this.opened = false;    
   },
   open: function() {
@@ -20,8 +19,8 @@ org.xwidgets.core.EventObserver = xw.NonVisual.extend({
     }
   },
   fire: function(params) {
-    if (this.onFire) {
-      this.onFire.invoke();
+    if (this.onfire) {
+      this.onfire.invoke();
     }; 
   },
   setEvent: function(event) {
