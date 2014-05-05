@@ -2,6 +2,7 @@ package("org.xwidgets.core");
 
 org.xwidgets.core.InputSecret = xw.Visual.extend({
   _constructor: function() {
+    this._super();
     this.registerProperty("value", {default: null});
     this.registerProperty("styleClass", {default: ""});
     this.control = null;
