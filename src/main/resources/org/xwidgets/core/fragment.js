@@ -1,44 +1,32 @@
 package("org.xwidgets.core");
 
-org.xwidgets.core.Fragment = function() {
-  xw.Visual.call(this);
-  this._className = "org.xwidgets.core.Fragment";
-  this.registerProperty("rendered", {default: true});
-  
-  this.childrenRendered = false;
-  this.control = null;
-};
-
-org.xwidgets.core.Fragment.prototype = new xw.Visual();
-   
-org.xwidgets.core.Fragment.prototype.render = function(container) {
-   if (this.control == null) {
-     this.control = document.createElement("span");
-     container.appendChild(this.control);
-     this.doRender();
-   }    
-};
-
-org.xwidgets.core.Fragment.prototype.doRender = function() {
-  if (this.control === null) return;
-  
-  if (this.rendered.value === true) {
-    if (!this.childrenRendered) {
-      this.renderChildren(this.control);
-      this.childrenRendered = true;      
+org.xwidgets.core.Fragment = xw.Visual.extend({
+  _constructor: function() {
+    this._super(false);
+    this.registerProperty("rendered", {default: true, listener: this.doRender});  
+    this.childrenRendered = false;
+    this.control = null;
+  },
+  render: function(container) {
+    if (this.control == null) {
+      this.control = document.createElement("span");
+      container.appendChild(this.control);
+      this.doRender(this.rendered.value);
+    }    
+  },
+  doRender: function(rendered) {
+    if (xw.Sys.isUndefined(this.control) || this.control === null) {
+      return;
     }
-    this.control.style.display = "";
-  } else {
-    this.control.style.display = "none";
-  }
-};
 
-org.xwidgets.core.Fragment.prototype.setRendered = function(rendered) {
-  if (xw.EL.isExpression(rendered)) {
-    this.rendered.value = xw.EL.createBinding(this, "rendered", rendered) === true;
-  } else {
-    this.rendered.value = rendered;
+    if (rendered === true) {
+      if (!this.childrenRendered) {
+        this.renderChildren(this.control);
+        this.childrenRendered = true;      
+      }
+      this.control.style.display = "";
+    } else {
+      this.control.style.display = "none";
+    }
   }
-  
-  this.doRender();
-};
+});
