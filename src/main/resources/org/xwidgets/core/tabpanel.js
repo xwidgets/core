@@ -17,7 +17,7 @@ org.xwidgets.core.Tab = xw.Visual.extend({
 
 org.xwidgets.core.TabPanel = xw.Visual.extend({
   _constructor: function() {
-    this.registerProperty("styleClass", {default: ""});
+    this.registerProperty("styleClass", {default: null});
     this.registerEvent("beforeScroll");
     this.control = null;
     this.activeTab = null;
@@ -26,7 +26,9 @@ org.xwidgets.core.TabPanel = xw.Visual.extend({
   render: function(container) {
     if (this.control == null) {  
       this.control = document.createElement("div");
-      this.control.className = this.styleClass.value;    
+      if (this.styleClass.value != null) {
+        this.control.className = this.styleClass.value;
+      }
       container.appendChild(this.control);  
           
       for (var i = 0; i < this.children.length; i++) {

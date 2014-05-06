@@ -1776,24 +1776,26 @@ xw.Visual = xw.Widget.extend({
     this.registerEvent("afterRender");
   },
   renderChildren: function(container) {
-    var i;
-    for (i = 0; i < this.children.length; i++) {
-      if (this.children[i] instanceof xw.Visual) {  
-        if (xw.Sys.isUndefined(this.children[i].render)) {
-          throw "Error - widget [" + this.children[i] + "] extending xw.Visual does not provide a render() method";
-        } else {
-          this.children[i].render.call(this.children[i], container);         
-          if (xw.Sys.isDefined(this.children[i].afterRender)) {
-            this.children[i].afterRender.invoke(this.children[i]);
-          }                    
-        }
-      } else if (this.children[i] instanceof xw.NonVisual) {     
-        if (typeof this.children[i].open == "function") {
-          this.children[i].open();
-        }
+    for (var i = 0; i < this.children.length; i++) {
+      this.renderChild(this.children[i], container);
+    }
+  },
+  renderChild: function(child, container) {
+    if (child instanceof xw.Visual) {  
+      if (xw.Sys.isUndefined(child.render)) {
+        throw "Error - widget [" + child + "] extending xw.Visual does not provide a render() method";
       } else {
-        throw "Error - unrecognized widget type [" + this.children[i] + "] encountered in view definition";
+        child.render.call(child, container);         
+        if (xw.Sys.isDefined(child.afterRender)) {
+          child.afterRender.invoke(child);
+        }                    
       }
+    } else if (child instanceof xw.NonVisual) {     
+      if (typeof child.open == "function") {
+        child.open();
+      }
+    } else {
+      throw "Error - unrecognized widget type [" + child + "] encountered in view definition";
     }
   }
 });
@@ -2168,39 +2170,47 @@ xw.open = function(viewName, params, container, callback) {
   xw.Controller.open(viewName, params, container, callback);
 };
 
-// Walks through the DOM and scans for any view or datamodule nodes that should be opened
-xw.scanDocument = function() {
-  var xwNodes = [];
-
-  var scanDOM = function(node) {
-    if (node && (node.nodeName.toUpperCase() == "XW:VIEW" ||
-        node.nodeName.toUpperCase() == "XW:DATAMODULE")) {
-      xwNodes.push(node);   
+xw.ready = {
+  registered: [],
+  register: function(f) {
+    xw.ready.registered.push(f);
+  },
+  invoke: function() {
+    document.removeEventListener("DOMContentLoaded", xw.ready.invoke, false);
+    window.removeEventListener("load", xw.ready.invoke, false);
+    xw.ready.scanDocument();
+    for (var i = 0; i < xw.ready.registered.length; i++) {
+      xw.ready.registered[i].call();
     }
-  
-    node = node.firstChild;
-    
-    while (node) {
-      scanDOM(node);
-      node = node.nextSibling;
-    }  
-  };
-  
-  scanDOM(document.body);
-  
-  for (var i = 0; i < xwNodes.length; i++) {
-    // TODO implement params support
-    xw.Controller.open(xwNodes[i].attributes.getNamedItem("name").value, null, xwNodes[i].parentNode);
-  }
-};
+  },
+  // Walks through the DOM and scans for any view or datamodule nodes that should be opened
+  scanDocument: function() {
+    var xwNodes = [];
 
-xw.ready = function() {
-  document.removeEventListener("DOMContentLoaded", xw.ready, false);
-  window.removeEventListener("load", xw.ready, false);
-  xw.scanDocument();
+    var scanDOM = function(node) {
+      if (node && (node.nodeName.toUpperCase() == "XW:VIEW" ||
+          node.nodeName.toUpperCase() == "XW:DATAMODULE")) {
+        xwNodes.push(node);   
+      }
+    
+      node = node.firstChild;
+      
+      while (node) {
+        scanDOM(node);
+        node = node.nextSibling;
+      }  
+    };
+    
+    scanDOM(document.body);
+    
+    for (var i = 0; i < xwNodes.length; i++) {
+      // TODO implement params support
+      xw.Controller.open(xwNodes[i].attributes.getNamedItem("name").value, null, xwNodes[i].parentNode);
+    }
+  }  
 };
 
 new function() {
-  document.addEventListener("DOMContentLoaded", xw.ready, false);
-  window.addEventListener("load", xw.ready, false);
+  document.addEventListener("DOMContentLoaded", xw.ready.invoke, false);
+  window.addEventListener("load", xw.ready.invoke, false);
 }();

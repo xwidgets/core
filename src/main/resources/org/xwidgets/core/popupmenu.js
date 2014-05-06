@@ -18,7 +18,7 @@ org.xwidgets.core.PopupMenu = xw.Visual.extend({
         this.control.style.position = "absolute";
       }
       
-      container.appendChild(this.control);
+      document.body.appendChild(this.control);
 
       this.propagateChildProperty(org.xwidgets.core.MenuItem, "menu", this);
       this.renderChildren(this.control);
