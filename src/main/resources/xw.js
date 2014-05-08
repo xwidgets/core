@@ -1871,7 +1871,7 @@ xw.Text = xw.Visual.extend({
   render: function(container) {
     this.control = document.createElement("span");
     container.appendChild(this.control);
-    this.renderText(this.value.value);  
+    this.renderText(this.value.value);
   },
   renderText: function(value) {
     if (this.control !== null) {
@@ -1896,7 +1896,7 @@ xw.Text = xw.Visual.extend({
 xw.Container = xw.Visual.extend({
   _constructor: function() {
     this._super(false);
-    
+
     // FIXME hard coded the layout for now
     this.layout = new xw.BorderLayout();
   }
