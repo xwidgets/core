@@ -12,6 +12,9 @@ org.xwidgets.core.Tab = xw.Visual.extend({
       this.container = container;
       this.renderChildren(this.container);
     }
+  },
+  setActive: function() {
+    this.parent.setActiveTab(this);
   }
 });
 
@@ -24,20 +27,40 @@ org.xwidgets.core.DefaultTabRenderer.prototype.render = function(container) {
   for (var i = 0; i < this.tabPanel.tabs.length; i++) {
     var tab = this.tabPanel.tabs[i];
     
-    var tabDiv = document.createElement("div");
-    tabDiv.style.cssFloat = "left";
-    tabDiv.style.whiteSpace = "nowrap";
-    tabDiv.appendChild(document.createTextNode(tab.control.name.value));
-    container.appendChild(tabDiv);
+    tab.tabDiv = document.createElement("div");
+    tab.tabDiv.style.cssFloat = "left";
+    tab.tabDiv.style.whiteSpace = "nowrap";
+    tab.tabDiv.style.cursor = "pointer";
+    if (this.tabPanel.activeTab == tab) {
+      this.setActive(tab);
+    }
+    tab.tabDiv.appendChild(document.createTextNode(tab.control.name.value));
+    var createCallback = function(tab) {
+      return function(event) {
+        tab.control.setActive();
+        event.preventDefault();      
+      }
+    };
+    xw.Sys.chainEvent(tab.tabDiv, "click", createCallback(tab));
+    container.appendChild(tab.tabDiv);
   };
   
   this.tabPanel.repositionContent();
+};
+
+org.xwidgets.core.DefaultTabRenderer.prototype.setInactive = function(tab) {
+  tab.tabDiv.className = "";
+};
+
+org.xwidgets.core.DefaultTabRenderer.prototype.setActive = function(tab) {
+  tab.tabDiv.className = this.tabPanel.activeTabStyle.value;
 };
 
 org.xwidgets.core.TabPanel = xw.Visual.extend({
   _constructor: function() {
     this.registerProperty("headerStyle", {default: "tabHeader"});
     this.registerProperty("contentStyle", {default: "tabContent"});
+    this.registerProperty("activeTabStyle", {default: "active"});
     this.registerEvent("beforeScroll");
     this.tabRenderer = new org.xwidgets.core.DefaultTabRenderer(this);
     this.headerControl = null;
@@ -149,14 +172,23 @@ org.xwidgets.core.TabPanel = xw.Visual.extend({
 
     if (typeof idx === "string") {
       tab = this.getTabByName(idx);
+    } else if (idx instanceof org.xwidgets.core.Tab) {
+      for (var i = 0; i < this.tabs.length; i++) {
+        if (this.tabs[i].control == idx) {
+          tab = this.tabs[i];
+          break;
+        }
+      }    
     } else if (idx != this.getActiveTabIndex() && idx >= 0 && idx < this.tabs.length) {
       tab = this.tabs[idx];
     }
     
     if (tab != null && tab != this.activeTab) {
       this.activeTab.container.style.display = "none";
+      this.tabRenderer.setInactive(this.activeTab);
       tab.container.style.display = "block";
       this.activeTab = tab;
+      this.tabRenderer.setActive(tab);
       
       if (xw.Sys.isDefined(this.activeTab.control.onActivate)) {
         this.activeTab.control.onActivate.invoke(tab);
