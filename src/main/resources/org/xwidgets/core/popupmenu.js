@@ -16,6 +16,7 @@ org.xwidgets.core.PopupMenu = xw.Visual.extend({
         this.control.className = this.styleClass.value;
         this.control.style.display = "none";
         this.control.style.position = "absolute";
+        this.control.style.zIndex = "255";
       }
       
       document.body.appendChild(this.control);

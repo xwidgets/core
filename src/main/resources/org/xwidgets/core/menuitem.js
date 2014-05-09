@@ -134,7 +134,7 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
         }
         
         c.style.position = "absolute";
-        c.style.zIndex = 10;       
+        c.style.zIndex = 255;       
         c.style.overflow = "hidden";
         
         this.renderChildren(c);
