@@ -1056,6 +1056,7 @@ xw.Controller = {
       }
       
       if (item.status === xw.Controller.QUEUE_STATUS_DEFINITION_LOADED) {
+      
         // Validate all of the widgets used by the resource    
         var invalid = xw.Controller.validateWidgets(null, xw.Controller.resourceDefs[item.resource].children, {});
         if (xw.Sys.objectSize(invalid) > 0) {
@@ -1096,17 +1097,33 @@ xw.Controller = {
         }
       }
       
-      if (item.status === xw.Controller.QUEUE_STATUS_WIDGETS_LOADED) {          
+      if (item.status === xw.Controller.QUEUE_STATUS_WIDGETS_LOADED) {
         var def = xw.Controller.resourceDefs[item.resource];
-        item.status = xw.Controller.QUEUE_STATUS_PROCESSED;
-        
-        var params = (xw.Sys.isDefined(item.params) && item.params !== null) ? item.params : {};
+      
+        // If there are still unloaded resources in the queue then wait until they're fully loaded
+        var proceed = true;
         
         if (def instanceof xw.ViewNode) {
-          xw.Controller.openView(item.resource, def, params, item.container, item.callback);
-        } else if (def instanceof xw.DataModuleNode) {
-          xw.Controller.openDataModule(item.resource, def, params, item.callback);
-        }    
+          for (var j = 0; j < xw.Controller.queue.length; j++) {
+            var other = xw.Controller.queue[j];
+            if (xw.Controller.resourceDefs[other.resource] instanceof xw.DataModuleNode &&
+                       other.status < xw.Controller.QUEUE_STATUS_PROCESSED) {
+              proceed = false;
+              break;
+            }
+          }
+        }
+             
+        if (proceed) {
+          item.status = xw.Controller.QUEUE_STATUS_PROCESSED;          
+          var params = (xw.Sys.isDefined(item.params) && item.params !== null) ? item.params : {};
+          
+          if (def instanceof xw.ViewNode) {
+            xw.Controller.openView(item.resource, def, params, item.container, item.callback);
+          } else if (def instanceof xw.DataModuleNode) {
+            xw.Controller.openDataModule(item.resource, def, params, item.callback);
+          }
+        }
       }
     }  
 

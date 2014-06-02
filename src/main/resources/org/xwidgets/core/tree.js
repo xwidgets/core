@@ -230,6 +230,7 @@ org.xwidgets.core.Tree = xw.Visual.extend({
     this.model = new org.xwidgets.core.TreeModel(this);
     this.renderer = new org.xwidgets.core.DefaultTreeRenderer(this);
     this.registerProperty("popupMenu", {default: undefined});
+    this.registerEvent("onDoubleClickNode");
     this.onSelect = null;
     this.onDragDrop = null;
     this.selectedNode = null;
@@ -397,6 +398,13 @@ org.xwidgets.core.Tree.onContextMenu = function(event, node) {
   event.preventDefault();
 };
 
+org.xwidgets.core.Tree.onDoubleClickNode = function(event, node) {
+  if (node.model.tree.onDoubleClickNode) {
+    node.model.tree.onDoubleClickNode.invoke(node.model.tree, {node: node});
+  }
+  event.preventDefault();
+};
+
 org.xwidgets.core.DefaultTreeRenderer = function(tree) {
   this.tree = tree;
   this.plusStartClass = "treePlusStart";
@@ -498,7 +506,11 @@ org.xwidgets.core.DefaultTreeRenderer.prototype.render = function(container, nod
 
     var mouseOutFunction = function(event) { t.onMouseOut(event, node); };
     xw.Sys.chainEvent(node.iconDiv, "mouseout", mouseOutFunction);
-    xw.Sys.chainEvent(node.contentCell, "mouseout", mouseOutFunction);    
+    xw.Sys.chainEvent(node.contentCell, "mouseout", mouseOutFunction);
+    
+    var doubleClickNodeFunction = function(event) { t.onDoubleClickNode(event, node); };
+    xw.Sys.chainEvent(node.iconDiv, "dblclick", doubleClickNodeFunction);    
+    xw.Sys.chainEvent(node.contentCell, "dblclick", doubleClickNodeFunction);
   }
 
   node.contentText.nodeValue = node.value;
