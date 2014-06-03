@@ -828,6 +828,25 @@ xw.Ajax = {
     } catch (e) {
       xw.Ajax.setLoading(-1);    
     }
+  },
+  invoke: function(options) {
+    xw.Ajax.setLoading(1);
+    try {      
+      var r = xw.Ajax.createRequestObject(options.callback, options.xml);
+      var method = xw.Sys.isDefined(options.method) ? options.method : "GET";
+      r.open(method, options.path, true);
+      if (xw.Sys.isDefined(options.decorator)) {
+        options.decorator.decorate.call(options.decorator, r);
+      }
+      if (xw.Sys.isDefined(options.content)) {
+        r.send(options.content);
+      } else {
+        r.send();
+      }
+    } catch (e) {
+      xw.Log.error("Error invoking AJAX request: " + e);
+      xw.Ajax.setLoading(-1);
+    }
   }
 };
 
