@@ -25,7 +25,11 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
       method: this.method.value,
       callback: function(response) { cb(response); },
       path: url,
-      decorator: this.decorator.value
+      content: content,
+      decorator: this.decorator.value,
+      headers: {
+        "Content-Type": "application/json;charset=UTF-8"
+      }
     });
   },
   toString: function() {

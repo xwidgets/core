@@ -835,9 +835,14 @@ xw.Ajax = {
       var r = xw.Ajax.createRequestObject(options.callback, options.xml);
       var method = xw.Sys.isDefined(options.method) ? options.method : "GET";
       r.open(method, options.path, true);
+      if (xw.Sys.isDefined(options.headers)) {
+        for (hdr in options.headers) {
+          r.setRequestHeader(hdr, options.headers[hdr]);
+        }
+      }
       if (xw.Sys.isDefined(options.decorator)) {
         options.decorator.decorate.call(options.decorator, r);
-      }
+      }      
       if (xw.Sys.isDefined(options.content)) {
         r.send(options.content);
       } else {
