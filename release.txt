@@ -1,0 +1,4 @@
+To release artifacts to Nexus repo execute this Maven command:
+
+mvn -Prelease clean source:jar deploy
+
