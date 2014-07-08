@@ -16,7 +16,6 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
       }
       container.appendChild(this.control);
     }
-
     this.propagateChildProperty(org.xwidgets.core.MenuItem, "menu", this);
     this.renderChildren(this.control);
   },

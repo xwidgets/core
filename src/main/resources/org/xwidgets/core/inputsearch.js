@@ -46,7 +46,7 @@ org.xwidgets.core.InputSearch.prototype.checkEnter = function(event) {
   
   if (key == 13) {
     if (xw.Sys.isDefined(this.onsearch)) {
-      this.onsearch.invoke();
+      this.onsearch.invoke(this, {searchTerm: this.getValue()});
     }
   }
 };
