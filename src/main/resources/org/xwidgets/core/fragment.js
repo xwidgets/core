@@ -18,11 +18,15 @@ org.xwidgets.core.Fragment = xw.Visual.extend({
     if (xw.Sys.isUndefined(this.control) || this.control === null) {
       return;
     }
+    
+    if (xw.Sys.isUndefined(rendered)) {
+      xw.Log.warn("fragment rendered variable is undefined");
+    }    
 
     if (rendered === true) {
       if (!this.childrenRendered) {
         this.renderChildren(this.control);
-        this.childrenRendered = true;      
+        this.childrenRendered = true;
       }
       this.control.style.display = "";
     } else {
