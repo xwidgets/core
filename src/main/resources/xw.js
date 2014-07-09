@@ -692,10 +692,19 @@ xw.EL = {
       if (xw.Sys.isUndefined(value) || value == null) {
         break;
       } else {
-        value = value[parts[i]];
+        // Check if there is a getter method for the current part and invoke it if there is
+        var isGetter = "is" + parts[i].charAt(0).toUpperCase() + parts[i].slice(1);
+        var getGetter = "get" + parts[i].charAt(0).toUpperCase() + parts[i].slice(1);
+        if (typeof value[isGetter] == "function") {
+          value = value[isGetter].apply(value);
+        } else if (typeof value[getGetter] == "function") {
+          value = value[getGetter].apply(value);
+        } else {
+          value = value[parts[i]];
+        }
       }
     }
-    return invert ? !value : value;  
+    return xw.Sys.isUndefined(value) ? undefined : (invert ? !value : value);
   },
   rootName: function(expr) {
     return xw.EL.regex(expr)[2].split(".")[0];

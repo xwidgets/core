@@ -3,7 +3,7 @@ package("org.xwidgets.core");
 org.xwidgets.core.Fragment = xw.Visual.extend({
   _constructor: function() {
     this._super(false);
-    this.registerProperty("rendered", {default: true, listener: this.doRender});  
+    this.registerProperty("rendered", {default: false, listener: this.doRender});  
     this.childrenRendered = false;
     this.control = null;
   },
