@@ -20,7 +20,12 @@ org.xwidgets.core.RestELBinding = xw.NonVisual.extend({
     }
 
     if (xw.Sys.isDefined(this.onresult)) {
-      result = this.onresult.invoke(this, {result:result});
+      // Invoke the onresult event if there is one
+      var val = this.onresult.invoke(this, {result:result});
+      // If the onresult event returned a value, replace the result with that value
+      if (xw.Sys.isDefined(val)) {
+        result = val;
+      }
     }
 
     this.value = result;
@@ -37,7 +42,7 @@ org.xwidgets.core.RestELBinding = xw.NonVisual.extend({
       } else {
         this.restEndpoint.value.invoke();
       }
-    }  
+    }
   },
   toString: function() {
     return "org.xwidgets.core.RestELBinding[" + this.binding.value + "]";

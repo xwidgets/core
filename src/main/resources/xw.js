@@ -1960,6 +1960,7 @@ xw.View = xw.Container.extend({
     this._super(false);
     this.registerProperty("viewName");
     this.registerProperty("params");
+    this.registerEvent("afterRender");
     // The container control
     this.container = null;  
     this._registeredWidgets = [];  
