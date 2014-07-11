@@ -15,6 +15,9 @@ org.xwidgets.core.Button = xw.Visual.extend({
       var span = document.createElement("span");
       span.appendChild(document.createTextNode(this.label.value === null ? "" : this.label.value));
       this.control.appendChild(span);
+      
+      this.renderChildren(this.control);
+      
       if (xw.Sys.isDefined(this.styleClass.value)) {
         this.control.className = this.styleClass.value;
       }
