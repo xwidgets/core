@@ -3,6 +3,7 @@ package("org.xwidgets.core");
 org.xwidgets.core.MultiSelectOption = xw.Visual.extend({
   _constructor: function() {
     this._super();
+    this.registerProperty("selected", {default: false});
     this.registerProperty("value", {default: null});
     this.registerProperty("styleClass", {default: null});
     this.control = null;
@@ -18,9 +19,16 @@ org.xwidgets.core.MultiSelectOption = xw.Visual.extend({
 
       container.appendChild(this.control);
       
+      xw.register
+      
       this.renderChildren(this.control);
-    }       
+    }
   },
+  resolve: function(name) {
+    if (name == "selected") {
+      return this.selected.value;
+    }
+  },  
   toString: function() {
     return "org.xwidgets.core.MultiSelectOption[" + this.id.value + "]";
   }
