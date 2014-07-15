@@ -5,8 +5,9 @@ org.xwidgets.core.TextArea = xw.Visual.extend({
     this._super();
     this.registerProperty("name", {default: null});
     this.registerProperty("value", {default: null});
+    this.registerProperty("rows", {default: null});
     this.registerProperty("formData", {default: null});
-    this.registerProperty("styleClass", {default: ""});
+    this.registerProperty("styleClass", {default: null});
     this.control = null;
   },
   render: function(container) {
@@ -18,13 +19,23 @@ org.xwidgets.core.TextArea = xw.Visual.extend({
         that.checkValueChanged.call(that, evt);
       }
       xw.Sys.chainEvent(this.control, "keyup", cb);
-      this.control.className = this.styleClass.value;
+      
+      if (xw.Sys.isDefined(this.styleClass.value)) {
+        this.control.className = this.styleClass.value;
+      }
+
       if (this.name.value != null) {
         this.control.name = this.name.value;
       }
+
       if (this.value.value != null) {
         this.control.value = this.value.value;
       }
+      
+      if (this.rows.value != null) {
+        this.control.rows = this.rows.value;
+      }
+      
       container.appendChild(this.control);
     }
   },
