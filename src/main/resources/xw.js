@@ -354,7 +354,16 @@ xw.Sys = {
       if (xw.EL.isExpression(value)) {
         prop.binding = value;
       } else {
-        prop.value = value;
+        if (prop.type) {
+          switch (prop.type) {
+            case "boolean":
+              prop.value = (value === true || "true" === value);
+              break;
+            default: prop.value = value;
+          }
+        } else {
+          prop.value = value;
+        }
       }
     } else {
       obj[property] = value;
@@ -1629,6 +1638,7 @@ xw.Property = function(owner, name, options) {
   this.name = name;
   if (options) {
     this.listener = options.listener;
+    this.type = options.type;
   }
 
   var that = this;
@@ -1749,6 +1759,15 @@ xw.Widget = xw.Class.extend({
       }
     }
     f(this);
+  },
+  findNearestAncestor: function(cls) {
+    var p = this.parent;
+    while (xw.Sys.isDefined(p)) {
+      if (p instanceof cls) {
+        return p;
+      }
+      p = p.parent;
+    }
   },
   addEvent: function(control, eventName, event) {     
     if (xw.Sys.isDefined(this["on" + eventName]) && xw.Sys.isDefined(event)) {        

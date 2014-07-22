@@ -3,14 +3,16 @@ package("org.xwidgets.core");
 org.xwidgets.core.MultiSelectOption = xw.Visual.extend({
   _constructor: function() {
     this._super();
-    this.registerProperty("selected", {default: false});
+    this.registerProperty("selected", {type: "boolean", default: false});
     this.registerProperty("value", {default: null});
     this.registerProperty("styleClass", {default: null});
+    this.parentSelect = null;
     this.control = null;
   },
   render: function(container) {
     if (this.control == null) {
-      this.parent.addOption(this);
+      this.parentSelect = this.findNearestAncestor(org.xwidgets.core.MultiSelection);
+      this.parentSelect.addOption(this);
       
       this.control = document.createElement("span");
       if (this.styleClass.value != null) {
