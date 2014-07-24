@@ -11,7 +11,7 @@ org.xwidgets.core.MultiSelectOption = xw.Visual.extend({
   },
   render: function(container) {
     if (this.control == null) {
-      this.parentSelect = this.findNearestAncestor(org.xwidgets.core.MultiSelection);
+      this.parentSelect = this.findNearestAncestor(org.xwidgets.core.MultiSelect);
       this.parentSelect.addOption(this);
       
       this.control = document.createElement("span");
@@ -44,7 +44,7 @@ org.xwidgets.core.MultiSelectOption = xw.Visual.extend({
   }
 });
 
-org.xwidgets.core.MultiSelection = xw.Visual.extend({
+org.xwidgets.core.MultiSelect = xw.Visual.extend({
   _constructor: function() {
     this._super();
     this.registerProperty("name", {default: null});

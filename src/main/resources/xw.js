@@ -1761,6 +1761,9 @@ xw.Widget = xw.Class.extend({
     f(this);
   },
   findNearestAncestor: function(cls) {
+    if (xw.Sys.isUndefined(cls)) {
+      xw.Log.error("Illegal argument, cls is undefined");
+    }
     var p = this.parent;
     while (xw.Sys.isDefined(p)) {
       if (p instanceof cls) {
