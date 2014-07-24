@@ -1,6 +1,20 @@
 package("org.xwidgets.core");
 
-org.xwidgets.core.Surrogate = xw.NonVisual.extend({ });
+org.xwidgets.core.Surrogate = xw.NonVisual.extend({ 
+  _constructor: function(name, value) {
+    this._super();
+    this.registerProperty("name", {default: name});
+    this.registerProperty("value", {default: value});
+  },
+  resolve: function(name) {
+    if (name == this.name.value) {
+      return this.value.value;
+    }
+  },
+  toString: function() {
+    return "org.xwidgets.core.Surrogate[]";
+  }
+});
 
 org.xwidgets.core.Repeat = xw.Visual.extend({
   _constructor: function() {
@@ -8,7 +22,6 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
     this.registerProperty("value", {default:null, listener: this.updateValue}); 
     this.registerProperty("var", {default: null});
     this.control = document.createElement("span");
-    this.currentItem = null;
     this.surrogates = null;
   },  
   render: function(container) {
@@ -21,10 +34,8 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
     if (value != null) {
       this.surrogates = [];  
 
-      for (var i = 0; i < value.length; i++) {
-        this.currentItem = value[i];
-              
-        var surrogate = new org.xwidgets.core.Surrogate();
+      for (var i = 0; i < value.length; i++) {              
+        var surrogate = new org.xwidgets.core.Surrogate(this.var.value, value[i]);
         surrogate.parent = this;
         this.surrogates.push(surrogate);
         
@@ -43,11 +54,14 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
   },
   resolve: function(name) {
     if (name == this.var.value) {
-      return this.currentItem;
+      return this.value.value;
     }
   },
   updateValue: function(value) {
     this.renderChildren(value);
+  },
+  toString: function() {
+    return "org.xwidgets.core.Repeat[]";
   }
 });
 

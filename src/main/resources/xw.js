@@ -1800,27 +1800,30 @@ xw.Widget = xw.Class.extend({
   // updated with a reference to that widget
   clone: function(parent) {
     var o = Object.create(this);
+    
+    // Set the parent
+    o.parent = xw.Sys.isUndefined(parent) ? this.parent : parent;    
 
     // Clone the registered properties only
     for (var p in this) {
       if (this[p] instanceof xw.Property) {
+      
+        // TODO create a proper xw.Property.clone() method that does this
         var prop = this[p];
-        if (o[p]) {
-          if (xw.EL.isExpression(this[p].binding)) {
-            o[p].binding = this[p].binding;
+        o[p] = new xw.Property(o, prop.name);
+        o[p].listener = prop.listener;
+        o[p].type = prop.type;
+        if (xw.EL.isExpression(this[p].binding)) {
+          o[p].binding = this[p].binding;
+        } else {
+          if (this[p].value instanceof xw.Widget) {
+            o[p].value = this[p].value;
           } else {
-            if (this[p].value instanceof xw.Widget) {
-              o[p].value = this[p].value;
-            } else {
-              o[p].value = xw.Sys.cloneObject(this[p].value);
-            }
+            o[p].value = xw.Sys.cloneObject(this[p].value);
           }
         }
       }
     }
-       
-    // Set the parent
-    o.parent = xw.Sys.isUndefined(parent) ? this.parent : parent;
     
     // Clone the children if there are any
     if (xw.Sys.isDefined(this.children)) {

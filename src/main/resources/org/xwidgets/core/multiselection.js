@@ -21,10 +21,18 @@ org.xwidgets.core.MultiSelectOption = xw.Visual.extend({
 
       container.appendChild(this.control);
       
-      xw.register
+      var that = this;
+      var e = function(event) {
+        xw.Sys.cancelEventBubble(event);
+        that.toggle();
+      };
+      xw.Sys.chainEvent(this.control, "click", e);
       
       this.renderChildren(this.control);
     }
+  },
+  toggle: function() {
+    alert("Toggled option: " + this.value.value);
   },
   resolve: function(name) {
     if (name == "selected") {
@@ -32,7 +40,7 @@ org.xwidgets.core.MultiSelectOption = xw.Visual.extend({
     }
   },  
   toString: function() {
-    return "org.xwidgets.core.MultiSelectOption[" + this.id.value + "]";
+    return "org.xwidgets.core.MultiSelectOption[" + this.value.value + "]";
   }
 });
 
