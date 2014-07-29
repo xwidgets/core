@@ -28,11 +28,24 @@ org.xwidgets.core.MultiSelectOption = xw.Visual.extend({
       };
       xw.Sys.chainEvent(this.control, "click", e);
       
+      xw.Sys.chainEvent(this.control, "mousedown", function(event) {
+        xw.Sys.cancelEventBubble(event); 
+        });
+      
       this.renderChildren(this.control);
     }
   },
   toggle: function() {
-    alert("Toggled option: " + this.value.value);
+    var selected = !this.selected.value;
+    if (this.parentSelect.setSelected(this.value.value, selected)) {
+      this.setSelected(selected);
+    }
+  },
+  setSelected: function(value) {
+    if (this.selected.value !== value) {
+      this.selected.value = value;
+      xw.EL.notify("selected");
+    }
   },
   resolve: function(name) {
     if (name == "selected") {
@@ -48,9 +61,31 @@ org.xwidgets.core.MultiSelect = xw.Visual.extend({
   _constructor: function() {
     this._super();
     this.registerProperty("name", {default: null});
-    this.registerProperty("multi", {default: true});
+    this.registerProperty("multi", {type: "boolean", default: true});
     this.registerProperty("values", {default: []});
     this.options = [];
+  },
+  setSelected: function(value, selected) {
+    if (selected) {
+      if (!xw.Array.contains(this.values.value, value)) {
+        if (this.multi.value === false && this.values.value.length > 0) {
+          for (var i = 0; i < this.options.length; i++) {
+            if (this.options[i].value.value !== value) {
+              xw.Array.remove(this.values.value, this.options[i].value.value);
+              this.options[i].setSelected(false);
+            }
+          }
+        }
+        this.values.value.push(value);
+        return true;
+      }
+    } else {
+      if (!(this.multi.value === false && this.values.value.length == 1 && xw.Array.contains(this.values.value, value))) {
+        xw.Array.remove(this.values.value, value);
+        return true;
+      }
+    }
+    return false;
   },
   render: function(container) {
     this.renderChildren(container);

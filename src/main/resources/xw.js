@@ -357,7 +357,7 @@ xw.Sys = {
         if (prop.type) {
           switch (prop.type) {
             case "boolean":
-              prop.value = (value === true || "true" === value);
+              prop.value = (value === true || "true" === value) ? true : false;
               break;
             default: prop.value = value;
           }
