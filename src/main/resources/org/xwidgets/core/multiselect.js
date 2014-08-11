@@ -11,10 +11,11 @@ org.xwidgets.core.MultiSelectOption = xw.Visual.extend({
   },
   render: function(container) {
     if (this.control == null) {
+      this.control = document.createElement("span");
       this.parentSelect = this.findNearestAncestor(org.xwidgets.core.MultiSelect);
       this.parentSelect.addOption(this);
+      this.parentSelect.setSelected(this.value.value, this.selected.value);
       
-      this.control = document.createElement("span");
       if (this.styleClass.value != null) {
         this.control.className = this.styleClass.value;
       }

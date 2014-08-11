@@ -1209,8 +1209,8 @@ xw.Controller = {
   // Loads the view definition from the server
   //
   loadResource: function(resource) {
-    xw.Log.debug("xw.Controller: Loading resource [" + resource + "]");
-    var path = xw.viewPath == null ? resource : (xw.viewPath + resource);    
+    var path = xw.viewPath == null ? resource : (xw.viewPath + resource);
+    xw.Log.debug("xw.Controller: Loading resource [" + path + "]");
     var req = xw.Sys.createHttpRequest("text/xml");
     req.onreadystatechange = function() { xw.Controller.loadResourceCallback(req, resource) };
     req.open("GET", path, true);
@@ -1914,7 +1914,7 @@ xw.XHtml = xw.Visual.extend({
       }
     }
     container.appendChild(this.control);
-    this.renderChildren(this.control);  
+    this.renderChildren(this.control);
   },
   setAttribute: function(attribName, value) {
     if (attribName == "class") {
