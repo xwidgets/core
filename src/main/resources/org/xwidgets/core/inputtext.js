@@ -34,7 +34,7 @@ org.xwidgets.core.InputText = xw.Visual.extend({
     if (value != this.value.value) {
       this.value.value = value;
       if (this.formData.value != null) {
-        this.formData.value.updateValue(this.control.name, this.value.value);
+        this.formData.value.updateValue(this.name.value, this.value.value);
       }
     }
   },

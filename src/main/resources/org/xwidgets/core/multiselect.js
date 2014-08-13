@@ -63,30 +63,37 @@ org.xwidgets.core.MultiSelect = xw.Visual.extend({
     this._super();
     this.registerProperty("name", {default: null});
     this.registerProperty("multi", {type: "boolean", default: true});
+    this.registerProperty("formData", {default: null});
     this.registerProperty("values", {default: []});
     this.options = [];
   },
   setSelected: function(value, selected) {
-    if (selected) {
-      if (!xw.Array.contains(this.values.value, value)) {
-        if (this.multi.value === false && this.values.value.length > 0) {
-          for (var i = 0; i < this.options.length; i++) {
-            if (this.options[i].value.value !== value) {
-              xw.Array.remove(this.values.value, this.options[i].value.value);
-              this.options[i].setSelected(false);
+    try {
+      if (selected) {
+        if (!xw.Array.contains(this.values.value, value)) {
+          if (this.multi.value === false && this.values.value.length > 0) {
+            for (var i = 0; i < this.options.length; i++) {
+              if (this.options[i].value.value !== value) {
+                xw.Array.remove(this.values.value, this.options[i].value.value);
+                this.options[i].setSelected(false);
+              }
             }
           }
+          this.values.value.push(value);
+          return true;
         }
-        this.values.value.push(value);
-        return true;
+      } else {
+        if (!(this.multi.value === false && this.values.value.length == 1 && xw.Array.contains(this.values.value, value))) {
+          xw.Array.remove(this.values.value, value);
+          return true;
+        }
       }
-    } else {
-      if (!(this.multi.value === false && this.values.value.length == 1 && xw.Array.contains(this.values.value, value))) {
-        xw.Array.remove(this.values.value, value);
-        return true;
+      return false;
+    } finally {
+      if (this.formData.value != null) {
+        this.formData.value.updateValue(this.name.value, this.values.value);
       }
     }
-    return false;
   },
   render: function(container) {
     this.renderChildren(container);
