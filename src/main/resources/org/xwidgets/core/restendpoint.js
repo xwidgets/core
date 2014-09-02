@@ -15,12 +15,18 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
     this.registerProperty("callback");
     this.registerProperty("decorator");
   },
-  invoke: function(method, params, content, cb) {
-    if (xw.Sys.isUndefined(cb)) {
-      cb = this.callback.value ? this.callback.value : function() {};
+  invoke: function(method, params) {
+    if (xw.Sys.isUndefined(params)) {
+      params = {};
     }
+  
+    var cb = xw.Sys.isDefined(params.callback) ?
+      params.callback :
+      (this.callback.value ? this.callback.value : function() {});
 
-    var url = this.url.value;
+    var m = xw.Sys.isDefined(params.method) ? params.method : (method ? method : "GET");
+
+    var url = this.url.value;  
     
     for (var c in this.children) {
       if (c instanceof org.xwidgets.core.EndpointMethod && c.method.value == method) {
@@ -28,15 +34,29 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
       }
     }
     
-    if (params) {
-      for (var p in params) {
-         var replaceParam = "{" + p + "}";
-         url = url.replace(replaceParam, params[p]); 
+    if (xw.Sys.isDefined(params.queryParams)) {
+      var queryParams = "";
+
+      for (var p in params.queryParams) {
+        if (queryParams.length > 0) {
+          queryParams += "&";
+        }
+        queryParams += encodeURIComponent(p + "=" + params.queryParams[p]);
+      }
+      
+      url += "?" + queryParams;
+    }
+    
+    if (xw.Sys.isDefined(params.pathParams)) {
+      for (var p in params.pathParams) {
+        url = url.replace("{" + p + "}", params.pathParams[p]); 
       }
     }
     
+    var content = xw.Sys.isDefined(params.content) ? params.content : null;
+    
     xw.Ajax.invoke({
-      method: method,
+      method: m,
       callback: function(response) { cb(response); },
       path: url,
       content: content,
@@ -46,17 +66,17 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
       }
     });
   },
-  get: function(params, content, cb) {
-    this.invoke("GET", params, content, cb);
+  get: function(params) {
+    this.invoke("GET", params);
   },
-  post: function(params, content, cb) {
-    this.invoke("POST", params, content, cb);
+  post: function(params) {
+    this.invoke("POST", params);
   },
-  put: function(params, content, cb) {
-    this.invoke("PUT", params, content, cb);
+  put: function(params) {
+    this.invoke("PUT", params);
   },
-  delete: function(params, content, cb) {
-    this.invoke("DELETE", params, content, cb);
+  delete: function(params) {
+    this.invoke("DELETE", params);
   },
   toString: function() {
     return "org.xwidgets.core.RestEndpoint[" + this.method.value + ":" + this.url + "]";
