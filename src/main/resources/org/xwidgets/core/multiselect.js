@@ -91,7 +91,11 @@ org.xwidgets.core.MultiSelect = xw.Visual.extend({
       return false;
     } finally {
       if (this.formData.value != null) {
-        this.formData.value.updateValue(this.name.value, this.values.value);
+        if (this.multi.value === true) {
+          this.formData.value.updateValue(this.name.value, this.values.value);
+        } else {
+          this.formData.value.updateValue(this.name.value, (this.values.value.length > 0) ? this.values.value[0] : null);
+        }
       }
     }
   },

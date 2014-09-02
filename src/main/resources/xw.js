@@ -884,9 +884,10 @@ xw.DataModuleNode = function(children) {
 //
 // Contains metadata about a view node that represents an event
 //
-xw.EventNode = function(type, script) {
+xw.EventNode = function(type, script, vars) {
   this.type = type;
   this.script = script;
+  this.vars = vars;
 };
 
 //
@@ -1617,9 +1618,13 @@ xw.Action.prototype.invoke = function(callee, args) {
     __script += this.script;
     __script += "}";
     
-    var argNames = ["__registered", "params", "_owner"];
+    var ev = function(expr) {
+      return xw.EL.eval(this, expr);
+    };
+    
+    var argNames = ["__registered", "params", "_owner", "evaluate"];
     // The actual argument array which will be passed to the function call
-    var a = [__registered, params, this.owner];
+    var a = [__registered, params, this.owner, ev];
 
     for (var arg in args) {
       argNames.push(arg);
