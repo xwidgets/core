@@ -30,6 +30,11 @@ org.xwidgets.core.Form = xw.Visual.extend({
       }
     }
   },
+  reset: function() {
+    if (this.control) {
+      this.control.reset();
+    }
+  },
   destroy: function() {
     this._super();
   }

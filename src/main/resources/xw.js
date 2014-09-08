@@ -660,7 +660,10 @@ xw.EL = {
           break;
         }
       }
-      w = w.parent;    
+      if (w.parent == w) {
+        break; // protection from infinite loops
+      }
+      w = w.parent;
     } 
     
     if (root === null) {
@@ -1618,8 +1621,9 @@ xw.Action.prototype.invoke = function(callee, args) {
     __script += this.script;
     __script += "}";
     
+    var that = this;
     var ev = function(expr) {
-      return xw.EL.eval(this, expr);
+      return xw.EL.eval(that, expr);
     };
     
     var argNames = ["__registered", "params", "_owner", "evaluate"];
