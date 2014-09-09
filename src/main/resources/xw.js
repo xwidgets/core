@@ -796,7 +796,7 @@ xw.Ajax = {
     r.onreadystatechange = function() {
       if (r.readyState == 4) {
         try {
-          if (r.status >= 200 && r.status <= 299) {
+//          if (r.status >= 200 && r.status <= 299) {
             // Done to avoid a memory leak
             window.setTimeout(function() {
               r.onreadystatechange = function() {};
@@ -805,23 +805,23 @@ xw.Ajax = {
               if (xml === true) {
                 try {
                   r.responseXML.documentElement;
-                  callback(r.responseXML);
+                  callback(r.responseXML, r);
                 } catch (ex) {
                   try {
                     var doc = new ActiveXObject("Microsoft.XMLDOM");
                     doc.async = "false";
                     doc.loadXML(r.responseText);
-                    callback(doc);
+                    callback(doc, r);
                   } catch (e) {
                     var p = new DOMParser();
-                    callback(parser.parseFromString(r.responseText, "text/xml"));
+                    callback(parser.parseFromString(r.responseText, "text/xml"), r);
                   }
                 }
               } else {
-                callback(r.responseText);
+                callback(r.responseText, r);
               }
             }
-          }
+//          }
         } finally {
           xw.Ajax.setLoading(-1);
         }
