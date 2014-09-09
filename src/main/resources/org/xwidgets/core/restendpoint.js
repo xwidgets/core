@@ -57,7 +57,7 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
     
     xw.Ajax.invoke({
       method: m,
-      callback: function(response) { cb(response); },
+      callback: function(response, r) { cb(response, r); },
       path: url,
       content: content,
       decorator: this.decorator.value,
