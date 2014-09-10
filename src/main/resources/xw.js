@@ -1758,7 +1758,7 @@ xw.Widget = xw.Class.extend({
     // Set the parent
     o.parent = xw.Sys.isUndefined(parent) ? this.parent : parent;    
 
-    // Clone the registered properties only
+    // Clone the registered properties only, plus any Actions
     for (var p in this) {
       if (this[p] instanceof xw.Property) {
       
@@ -1776,6 +1776,8 @@ xw.Widget = xw.Class.extend({
             o[p].value = xw.Sys.cloneObject(this[p].value);
           }
         }
+      } else if (this[p] instanceof xw.Action) {
+        o[p] = this[p].clone(o);       
       }
     }
     
@@ -1921,7 +1923,7 @@ xw.Text = xw.Visual.extend({
 
 xw.Action = xw.NonVisual.extend({ 
   _constructor: function() {
-    this._super();
+    this._super(false);
     this.script = null;
   },
   invoke: function(callee, args) {

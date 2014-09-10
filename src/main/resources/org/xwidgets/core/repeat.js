@@ -1,14 +1,13 @@
 package("org.xwidgets.core");
 
 org.xwidgets.core.Surrogate = xw.NonVisual.extend({ 
-  _constructor: function(name, value) {
+  _constructor: function(value) {
     this._super();
-    this.registerProperty("name", {default: name});
     this.registerProperty("value", {default: value});
     this.meta = null;
   },
   resolve: function(name) {
-    if (name == this.name.value) {
+    if (name == this.parent.var.value) {
       return this.value.value;
     } else if (name == this.parent.metaVar.value) {
       return this.meta;
@@ -41,7 +40,7 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
       try {
         for (var i = 0; i < value.length; i++) {
 
-          var surrogate = new org.xwidgets.core.Surrogate(this.var.value, value[i]);          
+          var surrogate = new org.xwidgets.core.Surrogate(value[i]);          
           surrogate.parent = this;
           surrogate.meta = {};
           // Set the meta variables
@@ -65,11 +64,6 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
       if (this.afterRender) {
         this.afterRender.invoke();
       };     
-    }
-  },
-  resolve: function(name) {
-    if (name == this.var.value) {
-      return this.value.value;
     }
   },
   updateValue: function(value) {

@@ -36,5 +36,8 @@ org.xwidgets.core.Button = xw.Visual.extend({
   },
   enable: function(value) {
     this.control.disabled = false;
+  },
+  toString: function() {
+    return "org.xwidgets.core.Button[" + this.label.value + "]";
   }
 });
