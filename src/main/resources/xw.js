@@ -565,6 +565,13 @@ xw.EL = {
       }
     }
   },
+  destroyViewResolvers: function(view) {
+    for (var i = xw.EL.resolvers.length - 1; i >= 0; i--) {
+      if (xw.EL.resolvers[i].owner == view) {
+        xw.EL.resolvers.splice(i, 1);
+      }
+    }  
+  },
   //
   // Invoked by an EL resolver when its value changes.  The resolver will invoke this
   // method with the rootName parameter containing the name of the root of the EL expression.
@@ -2053,6 +2060,7 @@ xw.View = xw.Container.extend({
   },
   destroy: function() {
     xw.EL.destroyViewBindings(this);
+    xw.EL.destroyViewResolvers(this);
 
     if (this.container != null) {
       if (xw.Sys.isDefined(this.children)) {

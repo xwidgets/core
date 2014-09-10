@@ -1,6 +1,7 @@
 package("org.xwidgets.core");
 org.xwidgets.core.ELBinding = xw.NonVisual.extend({
   _constructor: function() {
+    this._super(false);
     this.registerProperty("binding", {required: true});
     this.registerEvent("onbind");
     this.value = undefined;

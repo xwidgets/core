@@ -44,6 +44,9 @@ org.xwidgets.core.RestELBinding = xw.NonVisual.extend({
       }
     }
   },
+  destroy: function() {
+    xw.EL.unregisterResolver(this);
+  },
   toString: function() {
     return "org.xwidgets.core.RestELBinding[" + this.binding.value + "]";
   }
