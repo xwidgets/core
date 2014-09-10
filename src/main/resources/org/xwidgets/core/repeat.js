@@ -5,10 +5,13 @@ org.xwidgets.core.Surrogate = xw.NonVisual.extend({
     this._super();
     this.registerProperty("name", {default: name});
     this.registerProperty("value", {default: value});
+    this.meta = null;
   },
   resolve: function(name) {
     if (name == this.name.value) {
       return this.value.value;
+    } else if (name == this.parent.metaVar.value) {
+      return this.meta;
     }
   },
   toString: function() {
@@ -24,7 +27,6 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
     this.registerProperty("metaVar", {default: "meta"});
     this.control = document.createElement("span");
     this.surrogates = null;
-    this.meta = null;
   },  
   render: function(container) {
     container.appendChild(this.control);
@@ -37,17 +39,16 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
       this.surrogates = [];  
 
       try {
-        this.meta = {};
-
         for (var i = 0; i < value.length; i++) {
-          // Set the meta variables
-          this.meta.first = (i == 0);
-          this.meta.last = (i == (value.length - 1));
-          this.meta.odd = (i % 2);
-          this.meta.even = !this.meta.odd;
 
-          var surrogate = new org.xwidgets.core.Surrogate(this.var.value, value[i]);
+          var surrogate = new org.xwidgets.core.Surrogate(this.var.value, value[i]);          
           surrogate.parent = this;
+          surrogate.meta = {};
+          // Set the meta variables
+          surrogate.meta.first = (i == 0);
+          surrogate.meta.last = (i == (value.length - 1));
+          surrogate.meta.odd = (i % 2);
+          surrogate.meta.even = !surrogate.meta.odd;
           this.surrogates.push(surrogate);
           
           for (var j = 0; j < this.children.length; j++) {
@@ -69,8 +70,6 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
   resolve: function(name) {
     if (name == this.var.value) {
       return this.value.value;
-    } else if (name == this.metaVar.value) {
-      return this.meta;
     }
   },
   updateValue: function(value) {

@@ -1323,6 +1323,7 @@ xw.Controller = {
         }
       } else if (c instanceof xw.EventNode) {      
         var action = new xw.Action();
+        action.parent = parentWidget;
         action.script = c.script;
         action.owner = owner; 
         parentWidget[c.type] = action;
@@ -1578,65 +1579,6 @@ xw.Bounds = function(top, left, height, width) {
     this.style[property] = value;
     return this;
   };
-};
-
-xw.Action = function() {
-  this.script = null;
-};
-
-xw.Action.prototype.invoke = function(callee, args) {
-  if (xw.Sys.isDefined(this.script)) {     
-    // local variable, required to set up script variables     
-    var __registered = {};
-    
-    // local variable, visible to our evaluated script -
-    // makes the view or data module params available
-    var params = this.owner.params;
-    
-    // register variables for all widgets within the same view/data module with an id
-    xw.Array.iterate(this.owner._registeredWidgets, function(element) {
-      __registered[element.id.value] = element;
-    });
-
-    // register variables for all widgets with an id from any data modules, if there
-    // is no local overriding variable
-    for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
-      var dm = xw.Controller.activeDataModules[i];
-      xw.Array.iterate(dm._registeredWidgets, function(element) {
-        if (xw.Sys.isUndefined(__registered[element.id.value])) {
-          __registered[element.id.value] = element;
-        }       
-      });
-    }
-    
-    // The script must have access to named widgets (widgets with an id)
-    // to do this, we inject some additional lines into the front of the 
-    // script.
-    var __script = "{";
-
-    for (var id in __registered) {
-      __script += "  var " + id + " = __registered[\"" + id + "\"];";
-    }
-           
-    __script += this.script;
-    __script += "}";
-    
-    var that = this;
-    var ev = function(expr) {
-      return xw.EL.eval(that, expr);
-    };
-    
-    var argNames = ["__registered", "params", "_owner", "evaluate"];
-    // The actual argument array which will be passed to the function call
-    var a = [__registered, params, this.owner, ev];
-
-    for (var arg in args) {
-      argNames.push(arg);
-      a.push(args[arg]);
-    }
-    
-    return new Function(argNames, __script).apply(callee, a);
-  }
 };
 
 //
@@ -1974,6 +1916,70 @@ xw.Text = xw.Visual.extend({
   },
   toString: function() {
     return "xw.Text[" + this.value + "]";
+  }
+});
+
+xw.Action = xw.NonVisual.extend({ 
+  _constructor: function() {
+    this._super();
+    this.script = null;
+  },
+  invoke: function(callee, args) {
+    if (xw.Sys.isDefined(this.script)) {     
+      // local variable, required to set up script variables     
+      var __registered = {};
+      
+      // local variable, visible to our evaluated script -
+      // makes the view or data module params available
+      var params = this.owner.params;
+      
+      // register variables for all widgets within the same view/data module with an id
+      xw.Array.iterate(this.owner._registeredWidgets, function(element) {
+        __registered[element.id.value] = element;
+      });
+
+      // register variables for all widgets with an id from any data modules, if there
+      // is no local overriding variable
+      for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
+        var dm = xw.Controller.activeDataModules[i];
+        xw.Array.iterate(dm._registeredWidgets, function(element) {
+          if (xw.Sys.isUndefined(__registered[element.id.value])) {
+            __registered[element.id.value] = element;
+          }       
+        });
+      }
+      
+      // The script must have access to named widgets (widgets with an id)
+      // to do this, we inject some additional lines into the front of the 
+      // script.
+      var __script = "{";
+
+      for (var id in __registered) {
+        __script += "  var " + id + " = __registered[\"" + id + "\"];";
+      }
+             
+      __script += this.script;
+      __script += "}";
+      
+      var that = this;
+      var ev = function(expr) {
+        return xw.EL.eval(that, expr);
+      };
+      
+      var argNames = ["__registered", "params", "_owner", "evaluate"];
+      // The actual argument array which will be passed to the function call
+      var a = [__registered, params, this.owner, ev];
+
+      for (var arg in args) {
+        argNames.push(arg);
+        a.push(args[arg]);
+      }
+      
+      return new Function(argNames, __script).apply(callee, a);
+    }
+  },
+  toString: function() {
+    return "xw.Action[]";
   }
 });
 
