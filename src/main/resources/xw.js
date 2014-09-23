@@ -673,7 +673,7 @@ xw.EL = {
       w = w.parent;
     } 
     
-    if (root === null) {
+    if (root === null && widget != null) {
       var w = widget.owner.getWidgetById(parts[0]);
 
       // Next we check if there are any named widgets within the same view that match        

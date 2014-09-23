@@ -20,7 +20,7 @@ org.xwidgets.core.Fragment = xw.Visual.extend({
     }
     
     if (xw.Sys.isUndefined(rendered)) {
-      xw.Log.warn("fragment rendered variable is undefined");
+      xw.Log.warn("fragment rendered variable " + this.rendered.binding + " is undefined");
     }    
 
     if (rendered === true) {
