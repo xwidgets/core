@@ -23,8 +23,6 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     this.registerProperty("submenuStyleClass", {default: "xw_submenu"});
     this.registerProperty("definition", {listener: this.updateDefinition});
     this.registerEvent("onclick");
-    this.control = null;
-    this.submenuContainer = null;
   },
   updateDefinition: function(def) {
     // Clear all the current children - TODO move this to the base Widget class
@@ -56,53 +54,10 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     return items;
   },
   render: function(container) {
-    if (this.control == null) {
-      this.control = document.createElement("div");
-      
-      this.control.appendChild(document.createTextNode(this.label.value === null ? "" : this.label.value));
-      
-      if (this.children.length > 0) {
-        var icon = document.createElement("i");
-        icon.className ="fa fa-caret-right fa-fw";
-        this.control.appendChild(icon);
-      }
-      
-      if (xw.Sys.isDefined(this.styleClass.value)) {
-        this.control.className = this.styleClass.value;
-      }
-      container.appendChild(this.control);
-      
-      var that = this;
-
-      var clickEvent = function(event) {
-        that.click(event);
-      }
-            
-      xw.Sys.chainEvent(this.control, "click", clickEvent);
-      
-      // Disable default text selection behaviour
-      var mouseDownEvent = function(event) {
-        xw.Sys.cancelEventBubble(event);
-      };
-      xw.Sys.chainEvent(this.control, "mousedown", mouseDownEvent);
-      
-      if (this.children.length > 0) {
-        var mouseOverEvent = function(event) {
-          that.mouseOver(event);
-        }
-        xw.Sys.chainEvent(this.control, "mouseover", mouseOverEvent);
-      }
-    }
+    this.menu.renderItem(this, container);
   },
   destroy: function() {
-    if (this.submenuContainer) {
-      this.submenuContainer.parentNode.removeChild(this.submenuContainer);
-      this.submenuContainer = null;
-    }
-    if (this.control) {
-      this.control.parentNode.removeChild(this.control);
-      this.control = null;
-    }
+    this.menu.removeItem(this);
   },
   click: function(event) {
     if (this.children.length == 0) {
@@ -123,54 +78,6 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
       org.xwidgets.core.MenuItem.trackMouseOver(this);
     }
     xw.Sys.cancelEventBubble(event);
-  },
-  select: function() {
-    if (this.children.length > 0) {
-      var c = this.submenuContainer;
-      if (c == null) {
-        c = document.createElement("div");
-        if (xw.Sys.isDefined(this.submenuStyleClass.value)) {
-          c.className = this.submenuStyleClass.value;
-        }
-        
-        c.style.position = "absolute";
-        c.style.zIndex = 255;       
-        c.style.overflow = "hidden";
-        
-        this.renderChildren(c);
-        
-        document.body.appendChild(c);
-        this.submenuContainer = c; 
-      }
-      
-      var rect = this.control.getBoundingClientRect();        
-
-      if (this.parent instanceof org.xwidgets.core.MenuItem) {
-        var containerRect = this.parent.submenuContainer.getBoundingClientRect();
-        c.style.top = rect.top + "px";
-        c.style.left = (containerRect.right + 1) + "px";
-      } else if (this.parent instanceof org.xwidgets.core.PopupMenu) {
-        var containerRect = this.parent.control.getBoundingClientRect();
-        c.style.top = rect.top + "px";
-        c.style.left = (containerRect.right + 1) + "px";                
-      } else {
-        c.style.top = (rect.bottom + 1) + "px";
-        c.style.left = rect.left + "px";
-      }
-      
-      this.submenuContainer.style.display = "";
-    }
-    if (xw.Sys.isDefined(this.selectedStyleClass.value)) {
-      this.control.className = this.selectedStyleClass.value;
-    }
-  },
-  unselect: function() {
-    if (this.submenuContainer) {
-      this.submenuContainer.style.display = "none";  
-    }
-    if (xw.Sys.isDefined(this.styleClass.value)) {
-      this.control.className = this.styleClass.value;
-    }
   }
 });
 
@@ -183,7 +90,7 @@ org.xwidgets.core.MenuItem.trackMouseOver = function(menuItem) {
   if (menuItem != mi.mouseOverItem) {
     // Unselect the currently selected item
     if (mi.mouseOverItem != null) {
-      mi.mouseOverItem.unselect();
+      mi.mouseOverItem.menu.renderSelected(mi.mouseOverItem, false);
     }
   
     // Clear the existing timeout function if it's set

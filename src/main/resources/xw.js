@@ -1811,8 +1811,10 @@ xw.Visual = xw.Widget.extend({
     this.registerEvent("afterRender");
   },
   renderChildren: function(container) {
-    for (var i = 0; i < this.children.length; i++) {
-      this.renderChild(this.children[i], container);
+    if (xw.Sys.isDefined(this.children)) {
+      for (var i = 0; i < this.children.length; i++) {
+        this.renderChild(this.children[i], container);
+      }
     }
   },
   renderChild: function(child, container) {

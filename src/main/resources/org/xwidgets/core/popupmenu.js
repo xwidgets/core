@@ -64,6 +64,9 @@ org.xwidgets.core.PopupMenu = xw.Visual.extend({
       this.selectItem(menuItem);
     }
   },
+  renderItem: function(menuItem, container) {
+  
+  },
   selectItem: function(menuItem) {
     var open = this.isOpen();
     
