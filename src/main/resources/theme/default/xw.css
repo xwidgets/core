@@ -100,9 +100,76 @@ div.xw_popupmenu hr {
 
 /* VerticalMenu */
 
-div.xw_verticalmenu {
-  background-color: #555555;
-  width: 140px;
+.xw_verticalmenu,
+.xw_verticalmenu ul,
+.xw_verticalmenu ul li,
+.xw_verticalmenu ul li a {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  list-style: none;
+  line-height: 1;
+  display: block;
+  position: relative;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.xw_verticalmenu {
+  width: 200px;
+  font-family: Helvetica, Arial, sans-serif;
+  color: #ffffff;
+}
+.xw_verticalmenu ul ul {
+  display: none;
+}
+
+.xw_verticalmenu > ul > li > a {
+  padding: 15px 20px;
+  border-left: 1px solid #1682ba;
+  border-right: 1px solid #1682ba;
+  border-top: 1px solid #1682ba;
+  cursor: pointer;
+  z-index: 2;
+  font-size: 14px;
+  font-weight: bold;
+  text-decoration: none;
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  background: #36aae7;
+  background: -webkit-linear-gradient(#36aae7, #1fa0e4);
+  background: -moz-linear-gradient(#36aae7, #1fa0e4);
+  background: -o-linear-gradient(#36aae7, #1fa0e4);
+  background: -ms-linear-gradient(#36aae7, #1fa0e4);
+  background: linear-gradient(#36aae7, #1fa0e4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.xw_verticalmenu > ul > li > a:hover,
+.xw_verticalmenu > ul > li.active > a,
+.xw_verticalmenu > ul > li.open > a {
+  color: #eeeeee;
+  background: #1fa0e4;
+  background: -webkit-linear-gradient(#1fa0e4, #1992d1);
+  background: -moz-linear-gradient(#1fa0e4, #1992d1);
+  background: -o-linear-gradient(#1fa0e4, #1992d1);
+  background: -ms-linear-gradient(#1fa0e4, #1992d1);
+  background: linear-gradient(#1fa0e4, #1992d1);
+}
+.xw_verticalmenu > ul > li.open > a {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 1px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid #1682ba;
+}
+.xw_verticalmenu > ul > li:last-child > a,
+.xw_verticalmenu > ul > li.last > a {
+  border-bottom: 1px solid #1682ba;
+}
+
+.xw_verticalmenu > ul > li > a:hover > span::after,
+.xw_verticalmenu > ul > li.active > a > span::after,
+.xw_verticalmenu > ul > li.open > a > span::after {
+  border-color: #eeeeee;
 }
 
 /* Tree */

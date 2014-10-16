@@ -5,7 +5,7 @@ org.xwidgets.core.VerticalMenu = xw.Visual.extend({
     this._super();
     this.registerProperty("styleClass", {default: "xw_verticalmenu"});
     this.registerEvent("onclick");
-    this.control = null;    
+    this.control = null;
     this.selectedMenuItem = null;
   },
   render: function(container) {
@@ -14,16 +14,20 @@ org.xwidgets.core.VerticalMenu = xw.Visual.extend({
       if (xw.Sys.isDefined(this.styleClass.value)) {
         this.control.className = this.styleClass.value;
       }
+      var ul = document.createElement("ul");
+      this.control.appendChild(ul);
       container.appendChild(this.control);
     }
     this.propagateChildProperty(org.xwidgets.core.MenuItem, "menu", this);
-    this.renderChildren(this.control);
+    this.renderChildren(ul);
   },
   renderItem: function(menuItem, container) {
     if (menuItem.control == null) {
-      menuItem.control = document.createElement("div");
-      
-      menuItem.control.appendChild(document.createTextNode(menuItem.label.value === null ? "" : menuItem.label.value));
+      menuItem.control = document.createElement("li");
+      var anchor = document.createElement("a");
+      anchor.href = "#";
+      anchor.appendChild(document.createTextNode(menuItem.label.value === null ? "" : menuItem.label.value));
+      menuItem.control.appendChild(anchor);
       
       if (menuItem.children.length > 0) {
         var icon = document.createElement("i");
@@ -31,9 +35,9 @@ org.xwidgets.core.VerticalMenu = xw.Visual.extend({
         menuItem.control.appendChild(icon);
       }
       
-      if (xw.Sys.isDefined(menuItem.styleClass.value)) {
-        menuItem.control.className = menuItem.styleClass.value;
-      }
+      //if (xw.Sys.isDefined(menuItem.styleClass.value)) {
+      //  menuItem.control.className = menuItem.styleClass.value;
+      //}
       container.appendChild(menuItem.control);
 
       var clickEvent = function(event) {
