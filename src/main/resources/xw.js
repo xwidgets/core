@@ -284,23 +284,6 @@ xw.Sys = {
       return v.toString(16);
     });
   },
-  //
-  // Returns the specified style for an element
-  // TODO - probably need to fix this up for safari - use xw.Sys.getBorder() as an example
-  //
-  getStyle: function(element, cssRule) {
-	  var strValue = "";
-	  if (document.defaultView && document.defaultView.getComputedStyle) {
-		  strValue = document.defaultView.getComputedStyle(element, "").getPropertyValue(cssRule);
-	  }
-	  else if (element.currentStyle) {
-		  cssRule = cssRule.replace(/\-(\w)/g, function (strMatch, p1){
-			  return p1.toUpperCase();
-		  });
-		  strValue = element.currentStyle[cssRule];
-	  }
-	  return strValue;
-  },
   getBorder: function(control) {
     var border = {};
     if (window.navigator.userAgent.indexOf('Safari') === -1) {
@@ -464,8 +447,7 @@ xw.Log = {
 
 // 
 // Local Storage
-// TODO finish implementing this
-
+//
 xw.LocalStorage = {
   isSupported: function() {
     try {
@@ -747,6 +729,28 @@ xw.EL = {
     }
     return replaced;
   }
+};
+
+xw.Element = function(element) {
+  this.element = element;
+};
+
+xw.Element.prototype.addClass = function(cls) {
+  if (xw.Sys.isDefined(this.element.classList)) {
+    this.element.classList.add(cls);
+  } else {
+  
+  }
+  return this;
+};
+
+xw.Element.prototype.removeClass = function(cls) {
+  if (xw.Sys.isDefined(this.element.classList)) {
+    this.element.classList.remove(cls);
+  } else {
+  
+  }
+  return this;
 };
 
 //
@@ -1489,11 +1493,7 @@ xw.BorderLayout = function() {
     };
 
     // TODO - support percentage widths
-
-//    container.style.position = "relative";
-    
-//    xw.Sys.getStyle(container, "position")
-
+   
     for (i = 0; i < widgets.length; i++) {
       var w = widgets[i];
       if (controls[w.align]) {

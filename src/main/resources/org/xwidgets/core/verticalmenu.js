@@ -84,8 +84,8 @@ org.xwidgets.core.VerticalMenu = xw.Visual.extend({
     // If the menu wasn't open before but is down, chain a mousedown event on the document body 
     // that will close the menu
     if (!open && this.isOpen()) {
-      org.xwidgets.core.MenuBar.openMenu = this;
-      xw.Sys.chainEvent(document.body, "mousedown", org.xwidgets.core.MenuBar.documentMouseDown);
+      //org.xwidgets.core.MenuBar.openMenu = this;
+      //xw.Sys.chainEvent(document.body, "mousedown", org.xwidgets.core.MenuBar.documentMouseDown);
     }
   },
   removeItem: function(menuItem) {
@@ -103,37 +103,34 @@ org.xwidgets.core.VerticalMenu = xw.Visual.extend({
       if (this.children.length > 0) {
         var c = menuItem.submenuContainer;
         if (c == null) {
-          c = document.createElement("div");
-          if (xw.Sys.isDefined(menuItem.submenuStyleClass.value)) {
-            c.className = menuItem.submenuStyleClass.value;
-          }
+          c = document.createElement("ul");
+          //if (xw.Sys.isDefined(menuItem.submenuStyleClass.value)) {
+          //  c.className = menuItem.submenuStyleClass.value;
+          //}
           
-          c.style.position = "absolute";
-          c.style.zIndex = 255;       
-          c.style.overflow = "hidden";
+//          c.style.position = "absolute";
+//          c.style.zIndex = 255;       
+//          c.style.overflow = "hidden";
           
           menuItem.renderChildren(c);
           
-          document.body.appendChild(c);
+          menuItem.control.appendChild(c);
           menuItem.submenuContainer = c; 
+          new xw.Style(c).addClass("open");
         }
         
         var rect = menuItem.control.getBoundingClientRect();        
 
-        if (menuItem.parent instanceof org.xwidgets.core.MenuItem) {
+        /*if (menuItem.parent instanceof org.xwidgets.core.MenuItem) {
           var containerRect = menuItem.parent.submenuContainer.getBoundingClientRect();
           c.style.top = rect.top + "px";
           c.style.left = (containerRect.right + 1) + "px";
-        } else if (menuItem.parent instanceof org.xwidgets.core.PopupMenu) {
-          var containerRect = menuItem.parent.control.getBoundingClientRect();
-          c.style.top = rect.top + "px";
-          c.style.left = (containerRect.right + 1) + "px";                
         } else {
           c.style.top = (rect.bottom + 1) + "px";
           c.style.left = rect.left + "px";
         }
         
-        menuItem.submenuContainer.style.display = "";
+        menuItem.submenuContainer.style.display = "";*/
       }
       if (xw.Sys.isDefined(menuItem.selectedStyleClass.value)) {
         menuItem.control.className = menuItem.selectedStyleClass.value;
