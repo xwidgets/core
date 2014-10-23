@@ -122,7 +122,7 @@ div.xw_popupmenu hr {
   color: #ffffff;
 }
 .xw_verticalmenu ul ul {
-  display: none;
+ /* display: none;*/
 }
 
 .xw_verticalmenu > ul > li > a {

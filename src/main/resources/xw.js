@@ -731,26 +731,12 @@ xw.EL = {
   }
 };
 
-xw.Element = function(element) {
-  this.element = element;
-};
-
-xw.Element.prototype.addClass = function(cls) {
-  if (xw.Sys.isDefined(this.element.classList)) {
-    this.element.classList.add(cls);
-  } else {
+//
+// Transition effects
+//
+xw.FX = {
   
-  }
-  return this;
-};
 
-xw.Element.prototype.removeClass = function(cls) {
-  if (xw.Sys.isDefined(this.element.classList)) {
-    this.element.classList.remove(cls);
-  } else {
-  
-  }
-  return this;
 };
 
 //
@@ -895,6 +881,11 @@ xw.DataModuleNode = function(children) {
   this.children = children;
 };
 
+xw.StyleElementNode = function(name, value) {
+  this.name = name;
+  this.value = value;
+};
+
 //
 // Contains metadata about a view node that represents an event
 //
@@ -1014,6 +1005,11 @@ xw.DefinitionParser.prototype.parseChildNodes = function(children) {
           if (event) {              
             nodes.push(event);
           }
+        } else if (e.namespaceURI === xw.CORE_NAMESPACE && e.localName === "styleElement") {
+          var styleElement = this.parseStyleElement(e);
+          if (styleElement) {
+            nodes.push(styleElement);
+          }
         } else if (e.namespaceURI === xw.CORE_NAMESPACE && e.localName === "text") {
           var tn = new xw.TextNode(this.getElementAttributes(e));
           tn.escape = (e.getAttribute("escape") !== "false");
@@ -1064,6 +1060,12 @@ xw.DefinitionParser.prototype.parseEvent = function(e) {
       return new xw.EventNode(eventType, child.nodeValue);
     }
   }
+};
+
+xw.DefinitionParser.prototype.parseStyleElement = function(e) {
+  var name = e.getAttribute("name");
+  var value = e.getAttribute("value");
+  return new xw.StyleElementNode(name, value);
 };
 
 xw.Controller = {
@@ -1338,6 +1340,11 @@ xw.Controller = {
         action.script = c.script;
         action.owner = owner; 
         parentWidget[c.type] = action;
+      } else if (c instanceof xw.StyleElementNode) {
+        if (xw.Sys.isUndefined(parentWidget.styles)) {
+          parentWidget.styles = {};
+        }
+        parentWidget.styles[c.name] = c.value;
       } else if (c instanceof xw.XHtmlNode) {
         widget = new xw.XHtml();      
         widget.parent = parentWidget;
@@ -1468,124 +1475,6 @@ xw.WidgetManager = {
     }
     xw.Controller.processQueue();
   }
-};
-  
-//
-// LAYOUT MANAGERS
-//
-xw.BorderLayout = function() {
-  this.bounds = {};
-
-  xw.BorderLayout.prototype.calculateLayout = function(widgets) {
-    var i;
-    var controls = {      
-      top: [],
-      bottom: [],
-      left: [],
-      right: [],
-      client: [] 
-    };
-    var spacing = {
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0
-    };
-
-    // TODO - support percentage widths
-   
-    for (i = 0; i < widgets.length; i++) {
-      var w = widgets[i];
-      if (controls[w.align]) {
-        controls[w.align].push(w);
-      }
-    }
-
-    for (i = 0; i < controls.top.length; i++) {
-      var bounds = new xw.Bounds(null, null, controls.top[i].height, null)
-        .addStyleProperty("position", "absolute")
-        .addStyleProperty("top", spacing.top + "px")
-        .addStyleProperty("left", "0")
-        .addStyleProperty("right", "0");
-
-      this.bounds[controls.top[i]] = bounds;
-      spacing.top += 1.0 * controls.top[i].height;
-    }
-
-    for (i = 0; i < controls.bottom.length; i++) {
-      var bounds = new xw.Bounds(null, null, controls.bottom[i].height, null)
-        .addStyleProperty("position","absolute")
-        .addStyleProperty("bottom", spacing.bottom)
-        .addStyleProperty("left", "0")
-        .addStyleProperty("right", "0");
-
-      this.bounds[controls.bottom[i]] = bounds;
-      spacing.bottom += 1.0 * controls.bottom[i].height;
-    }
-
-    for (i = 0; i < controls.left.length; i++) {
-      this.bounds[controls.left[i]] = new xw.Bounds(null, null, null, controls.left[i].width)
-        .addStyleProperty("position", "absolute")
-        .addStyleProperty("left", spacing.left + "px")
-        .addStyleProperty("top", spacing.top + "px")
-        .addStyleProperty("bottom", spacing.bottom + "px");
-      spacing.left += 1.0 * controls.left[i].width;
-    }
-
-    for (i = 0; i < controls.right.length; i++) {
-      this.bounds[controls.right[i]] = new xw.Bounds(null, null, null, controls.right[i].width)
-        .addStyleProperty("position", "absolute")
-        .addStyleProperty("right", spacing.right + "px")
-        .addStyleProperty("top", spacing.top + "px")
-        .addStyleProperty("bottom", spacing.bottom + "px");
-      spacing.right += 1.0 * controls.right[i].width;
-    }
-
-    for (i = 0; i < controls.client.length; i++) {
-      this.bounds[controls.client[i]] = new xw.Bounds(null, null, null, null)
-        .addStyleProperty("position", "absolute")
-        .addStyleProperty("left", spacing.left + "px")
-        .addStyleProperty("right", spacing.right + "px")
-        .addStyleProperty("top", spacing.top + "px")
-        .addStyleProperty("bottom", spacing.bottom + "px");
-    }
-  };
-
-  xw.BorderLayout.prototype.getBounds = function(ctl) {
-    return this.bounds[ctl];
-  };
-};
-
-//
-// Defines the physical bounds of a control
-//
-xw.Bounds = function(top, left, height, width) {
-  this.top = top;
-  this.left = left;
-  this.height = height;
-  this.width = width;
-  this.style = new Object();
-  
-  xw.Bounds.prototype.getTop = function() {
-    return this.top;
-  };
-  
-  xw.Bounds.prototype.getLeft = function() {
-    return this.left;
-  };
-  
-  xw.Bounds.prototype.getHeight = function() {
-    return this.height;
-  };
-  
-  xw.Bounds.prototype.getWidth = function() {
-    return this.width;
-  };
-  
-  xw.Bounds.prototype.addStyleProperty = function(property, value) {
-    this.style[property] = value;
-    return this;
-  };
 };
 
 //
@@ -1748,13 +1637,16 @@ xw.Widget = xw.Class.extend({
       this._registeredEvents.push(eventName);
     }
   },
-  destroy: function() {
-    xw.EL.clearWidgetBindings(this);
-    if (this.children) {
+  clearChildren: function() {
+    if (xw.Sys.isDefined(this.children)) {
       for (var i = this.children.length - 1; i >= 0; i--) {
         this.children[i].destroy();
       }
-    }
+    }  
+  },
+  destroy: function() {
+    xw.EL.clearWidgetBindings(this);
+    this.clearChildren();
   },
   // Makes a cloned copy of the widget.  Any properties that contain
   // references to other widgets will not be cloned, they will just be
@@ -1808,6 +1700,7 @@ xw.Widget = xw.Class.extend({
 xw.Visual = xw.Widget.extend({
   _constructor: function() {
     this._super(false);
+    this.registerProperty("styles", {default:{}});
     this.registerEvent("afterRender");
   },
   renderChildren: function(container) {
@@ -1834,6 +1727,24 @@ xw.Visual = xw.Widget.extend({
     } else {
       throw "Error - unrecognized widget type [" + child + "] encountered in view definition";
     }
+  },
+  registerStyles: function(values) {
+    for (var n in values) {
+      this.styles.value[n] = values[n];
+    }
+  },
+  setStyleClass: function(control, styleName) {
+    if (control != null && this.isStyleSet(styleName)) {
+      control.className = this.getStyle(styleName);
+    }
+  },
+  getStyle: function(name) {
+    return this.isStyleSet(name) ? this.styles.value[name] : null;
+  },
+  isStyleSet: function(name) {
+    return xw.Sys.isDefined(this.styles) && 
+      xw.Sys.isDefined(this.styles.value) && 
+      xw.Sys.isDefined(this.styles.value[name]);
   }
 });
 
@@ -1997,9 +1908,6 @@ xw.Action = xw.NonVisual.extend({
 xw.Container = xw.Visual.extend({
   _constructor: function() {
     this._super(false);
-
-    // FIXME hard coded the layout for now
-    this.layout = new xw.BorderLayout();
   }
 });
 
@@ -2030,13 +1938,7 @@ xw.View = xw.Container.extend({
     var target = this;
     var callback = function() { target.resize(); };
     xw.Sys.chainEvent(window, "resize", callback);
-
-    // Create the appropriate layout manager and layout the child controls
-    if (this.layout !== null) {
-      //this.layoutManager = new xw.BorderLayout();
-      this.layout.calculateLayout(this.children);
-    }    
-    
+   
     this.renderChildren(this.container);
     
     if (xw.Sys.isDefined(this.afterRender)) {
