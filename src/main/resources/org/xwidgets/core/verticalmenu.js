@@ -33,12 +33,6 @@ org.xwidgets.core.VerticalMenu = xw.Visual.extend({
       anchor.appendChild(document.createTextNode(menuItem.label.value === null ? "" : menuItem.label.value));
       menuItem.control.appendChild(anchor);
       
-      if (menuItem.children.length > 0) {
-        var icon = document.createElement("i");
-        icon.className ="fa fa-caret-right fa-fw";
-        menuItem.control.appendChild(icon);
-      }
-
       container.appendChild(menuItem.control);
       var that = this;
       
