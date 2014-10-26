@@ -51,7 +51,12 @@ org.xwidgets.core.VerticalMenu = xw.Visual.extend({
   },
   clickItem: function(menuItem, event) {
     xw.Sys.cancelEventBubble(event);
-    this.selectItem(menuItem);
+    
+    if (menuItem.children.length > 0) {
+      this.selectItem(menuItem);
+    } else if (menuItem.onclick) {
+      menuItem.onclick.invoke(menuItem);
+    }
   },
   selectItem: function(menuItem) {   
     if (this.selectedMenuItem != null && 
@@ -96,7 +101,7 @@ org.xwidgets.core.VerticalMenu = xw.Visual.extend({
       menuItem.submenuContainer = null;
     }
     if (menuItem.control) {
-      menuItem.control.parentNode.removeChild(this.control);
+      menuItem.control.parentNode.removeChild(menuItem.control);
       menuItem.control = null;
     }  
   } 
