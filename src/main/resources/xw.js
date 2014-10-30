@@ -83,6 +83,8 @@ var xw = {
 // System Utils
 //
 xw.Sys = {
+  // Track any sources that have been already loaded, don't load again
+  loadedSources: [],
   getObject: function(id) {
     if (document.getElementById && document.getElementById(id)) {
       return document.getElementById(id);
@@ -122,41 +124,44 @@ xw.Sys = {
   //   failCallback = the callback function to invoke if loading failed
   //
   loadSource: function(url, callback, failCallback) {
-    xw.Log.debug("xw.Sys: Loading source [" + url + "]");
-    var req = xw.Sys.createHttpRequest("text/plain");
-    req.onreadystatechange = function() {
-      if (req.readyState === 4) {
-        if (req.status === 200 || req.status === 0) {
-          var e = document.createElement("script");
-          e.language = "javascript";
-          e.text = req.responseText;
-          e.type = "text/javascript";
-          var head = document.getElementsByTagName("head")[0];
-          if (head === null) {
-            head = document.createElement("head");
-            var html = document.getElementsByTagName("html")[0];
-            html.insertBefore(head, html.firstChild);
-          }
-          try {
-            head.appendChild(e);           
-          } catch (err) {
-            throw "There was an error loading the script from '" + url + "': " + err;
-            return;
-          }
-          if (callback) {
-            callback(url);
-          }               
-        } else if (req.status === 404) {
-          throw "404 error: the requested resource '" + url + "' could not be found.";
-          if (failCallback) {
-            failCallback();
+    if (!xw.Array.contains(xw.Sys.loadedSources, url)) {
+      xw.Sys.loadedSources.push(url);
+      xw.Log.debug("xw.Sys: Loading source [" + url + "]");
+      var req = xw.Sys.createHttpRequest("text/plain");
+      req.onreadystatechange = function() {
+        if (req.readyState === 4) {
+          if (req.status === 200 || req.status === 0) {
+            var e = document.createElement("script");
+            e.language = "javascript";
+            e.text = req.responseText;
+            e.type = "text/javascript";
+            var head = document.getElementsByTagName("head")[0];
+            if (head === null) {
+              head = document.createElement("head");
+              var html = document.getElementsByTagName("html")[0];
+              html.insertBefore(head, html.firstChild);
+            }
+            try {
+              head.appendChild(e);           
+            } catch (err) {
+              throw "There was an error loading the script from '" + url + "': " + err;
+              return;
+            }
+            if (callback) {
+              callback(url);
+            }               
+          } else if (req.status === 404) {
+            xw.Log.warn("404 error: the requested resource '" + url + "' could not be found.");
+            if (failCallback) {
+              failCallback();
+            }
           }
         }
-      }
-    };
+      };
 
-    req.open("GET", url, true);
-    req.send(null);
+      req.open("GET", url, true);
+      req.send(null);
+    }
   },
   getBasePath: function() {
     if (xw.basePath === null) {
@@ -1225,8 +1230,13 @@ xw.Controller = {
   //
   // Loads the view definition from the server
   //
-  loadResource: function(resource) {
-    var path = xw.viewPath == null ? resource : (xw.viewPath + resource);
+  loadResource: function(resource) { 
+    var path = xw.viewPath == null ? resource : (xw.viewPath + resource);    
+
+    // If there is a script for this view, load it first
+    var script = path.replace(/\.[^/.]+$/, "") + ".js";    
+    xw.Sys.loadSource(script);
+    
     xw.Log.debug("xw.Controller: Loading resource [" + path + "]");
     var req = xw.Sys.createHttpRequest("text/xml");
     req.onreadystatechange = function() { xw.Controller.loadResourceCallback(req, resource) };
