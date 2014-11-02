@@ -8,6 +8,7 @@ org.xwidgets.core.WebSocket = xw.NonVisual.extend({
     this.registerProperty("path");
     this.registerProperty("url");
     this.registerProperty("autoConnect", {default: false});
+    this.registerEvent("oncreate");
     this.registerEvent("onopen");
     this.registerEvent("onmessage");
     this.registerEvent("onerror");
@@ -17,6 +18,11 @@ org.xwidgets.core.WebSocket = xw.NonVisual.extend({
   open: function() {
     if (this.autoConnect.value === true) {
       this.connect();
+    }
+    
+    var that = this;
+    if (xw.Sys.isDefined(this.oncreate)) {
+      that.oncreate.invoke(that);
     }
   },
   connect: function() {
@@ -46,6 +52,6 @@ org.xwidgets.core.WebSocket = xw.NonVisual.extend({
     this.websocket.send(message);
   },
   toString: function() {
-    return "org.xwidgets.core.RestEndpoint[" + this.method.value + ":" + this.url + "]";
+    return "org.xwidgets.core.WebSocket[" + this.url.value + "]";
   }
 });
