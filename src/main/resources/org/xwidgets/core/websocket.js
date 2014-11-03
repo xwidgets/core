@@ -71,3 +71,5 @@ org.xwidgets.core.WebSocket = xw.NonVisual.extend({
     return "org.xwidgets.core.WebSocket[" + this.url.value + "]";
   }
 });
+
+//# sourceURL=org/xwidgets/core/websocket.js
