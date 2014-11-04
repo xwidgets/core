@@ -51,3 +51,5 @@ org.xwidgets.core.RestELBinding = xw.NonVisual.extend({
     return "org.xwidgets.core.RestELBinding[" + this.binding.value + "]";
   }
 });
+
+//# sourceURL=org/xwidgets/core/restelbinding.js
