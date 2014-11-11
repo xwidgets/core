@@ -11,7 +11,8 @@
   <properties>
     <version.jboss.bom>1.0.7.CR1</version.jboss.bom>
     <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
-    <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>    
+    <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>   
+    <version.deltaspike>1.0.0</version.deltaspike> 
   </properties>
 
   <name>XWidgets</name>
@@ -23,18 +24,51 @@
 			  <artifactId>jboss-javaee-6.0-with-security</artifactId>
 			  <version>${version.jboss.bom}</version>
 			  <type>pom</type>
-			  <scope>import</scope>
-			</dependency>
+        <scope>import</scope>
+      </dependency>
 		</dependencies>
 	</dependencyManagement>
 	  
 	<dependencies>
+	  <dependency>
+	    <groupId>org.jboss.spec.javax.ejb</groupId>
+	    <artifactId>jboss-ejb-api_3.1_spec</artifactId>
+	    <scope>provided</scope>
+	  </dependency>
+
 	  <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <version>3.0.1</version>
       <scope>provided</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>javax.enterprise</groupId>
+      <artifactId>cdi-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.deltaspike.core</groupId>
+      <artifactId>deltaspike-core-impl</artifactId>
+      <version>${version.deltaspike}</version>
+    </dependency>
+      
+    <!-- Web Sockets support -->
+    
+    <dependency>
+      <groupId>org.jboss.spec.javax.websocket</groupId>
+      <artifactId>jboss-websocket-api_1.0_spec</artifactId>
+      <version>1.0.0.Final</version>
+    </dependency>
+    
   </dependencies>
   
   <build>
