@@ -69,6 +69,22 @@
       <version>1.0.0.Final</version>
     </dependency>
     
+    <!-- JSON -->
+    
+    <dependency>
+      <groupId>javax.json</groupId>
+      <artifactId>javax.json-api</artifactId>
+      <version>1.0</version>
+    </dependency>
+    
+    <!-- GSON -->
+    
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.2.4</version>
+    </dependency>
+    
   </dependencies>
   
   <build>
