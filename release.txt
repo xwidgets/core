@@ -5,7 +5,7 @@ Steps for releasing: (refer to http://central.sonatype.org/pages/apache-maven.ht
 3. Verify build passes
 4. Update versions to release version
 5. Commit release version
-6. Run deployment
+6. Run deployment (command below)
 7. Update versions to next snapshot version
 8. Commit new snapshot version
 9. Develop, develop, develop and rinse and repeat
@@ -14,3 +14,4 @@ Steps for releasing: (refer to http://central.sonatype.org/pages/apache-maven.ht
 Release command:
 ----------------
 mvn clean deploy -P release
+
