@@ -31,14 +31,14 @@ org.xwidgets.core.WebSocket = xw.NonVisual.extend({
     this.websocket = new WebSocket(xw.Sys.isDefined(this.url.value) ? this.url.value : uri);
     var that = this;
     var onOpen = function(evt) {
+      if (xw.Sys.isDefined(that.onopen)) {
+        that.onopen.invoke(that, {event: evt});
+      }    
       // Send any queued messages
       for (var i = 0; i < that.queue.length; i++) {
         that.websocket.send(that.queue[i]);
       }
       that.queue = [];
-      if (xw.Sys.isDefined(that.onopen)) {
-        that.onopen.invoke(that, {event: evt});
-      }
     };
     this.websocket.onopen = onOpen;
     var onMessage = function(evt) {
