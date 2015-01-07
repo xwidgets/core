@@ -13,5 +13,5 @@ Steps for releasing: (refer to http://central.sonatype.org/pages/apache-maven.ht
 
 Release command:
 ----------------
-mvn clean deploy -P release
+mvn clean deploy
 
