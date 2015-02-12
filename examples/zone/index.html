@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xw="http://xwidgets.org">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Zone - XWidgets</title>
+    
+    <link href="../../src/main/resources/theme/default/xw.css" rel="stylesheet" type="text/css"/>
+    
+    <script src="../../src/main/resources/xw.js" type="text/javascript"></script>
+    <script src="../../src/main/resources/org/xwidgets/core/button.js" type="text/javascript"></script>
+    <script src="../../src/main/resources/org/xwidgets/core/elbinding.js" type="text/javascript"></script>
+    <script src="../../src/main/resources/org/xwidgets/core/zone.js" type="text/javascript"></script>
+  </head>
+  
+  <body>
+
+    <textarea id="src" style="width:800px;height:100px;font-family:courier">
+<?xml version="1.0" encoding="UTF-8"?>
+<xw:view xmlns="http://www.w3.org/1999/xhtml" xmlns:xw="http://xwidgets.org/core">
+  <xw:eLBinding id="state" binding="viewState" value="one"/>
+  
+  <xw:zone value="#{viewState}" activeOn="one">
+    <div>Zone One</div> 
+  </xw:zone>
+  
+  <xw:zone value="#{viewState}" activeOn="two">
+    <div>Zone Two</div>
+  </xw:zone>
+  
+  <xw:button label="Activate Zone One">
+    <xw:event type="onclick">
+      <xw:action type="script"><![CDATA[
+        state.setValue("one");
+      ]]></xw:action>
+    </xw:event>
+  </xw:button>
+  
+  <xw:button label="Activate Zone Two">
+    <xw:event type="onclick">
+      <xw:action type="script"><![CDATA[
+        state.setValue("two");
+      ]]></xw:action>
+    </xw:event>
+  </xw:button>  
+</xw:view>
+    </textarea>
+    
+    <div style="margin:4px">
+      <input type="button" value="Update" onclick="javascript:renderView()"/>
+    </div>
+
+    <div id="content"/>
+    
+    <script type="text/javascript">    
+      function renderView() {
+        var rootNode = xw.Sys.parseXml(document.getElementById("src").value);
+        var def = new xw.DefinitionParser().parse(rootNode.childNodes[0]);
+        
+        var view = new xw.View();
+        xw.Controller.parseChildren(view, def.children, view);
+        var container = document.getElementById("content");
+
+        xw.Sys.clearChildren(container);
+        view.render(container);
+      }
+      
+      renderView();
+    </script>
+
+  </body>
+
+</html>

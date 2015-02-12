@@ -41,3 +41,4 @@ org.xwidgets.core.Button = xw.Visual.extend({
     return "org.xwidgets.core.Button[" + this.label.value + "]";
   }
 });
+//# sourceURL=button.js
