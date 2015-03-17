@@ -127,3 +127,4 @@ org.xwidgets.core.Select = xw.Visual.extend({
     return "org.xwidgets.core.Select[" + this.id.value + "]";
   }
 });
+//# sourceURL=select.js

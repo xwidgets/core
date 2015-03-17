@@ -17,6 +17,7 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
   _constructor: function(label) {
     this._super();
     this.registerProperty("label", {default: label});
+    this.registerProperty("icon");
     this.registerProperty("rendered", {default: true});
     this.registerProperty("styleClass", {default: "xw_menuitem"});
     this.registerProperty("selectedStyleClass", {default: "xw_menuitem_selected"});
@@ -58,3 +59,4 @@ org.xwidgets.core.MenuItem = xw.Visual.extend({
     return "org.xwidgets.core.MenuItem[" + this.label.value + "]";
   }
 });
+//# sourceURL=menuitem.js

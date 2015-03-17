@@ -665,5 +665,5 @@ org.xwidgets.core.DefaultTreeRenderer.prototype.renderClone = function(container
     container.appendChild(tbl);
   }
 };
-
+//# sourceURL=tree.js
 

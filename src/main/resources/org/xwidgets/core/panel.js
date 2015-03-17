@@ -112,3 +112,4 @@ org.xwidgets.core.Panel.prototype.applyBounds = function(bounds) {
     }
   }
 }; 
+//# sourceURL=panel.js

@@ -39,3 +39,4 @@ org.xwidgets.core.Switch = xw.Visual.extend({
     this._super();
   }
 });
+//# sourceURL=switch.js

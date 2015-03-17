@@ -106,4 +106,5 @@ org.xwidgets.core.VerticalMenu = xw.Visual.extend({
     }  
   } 
 });
+//# sourceURL=verticalmenu.js
 

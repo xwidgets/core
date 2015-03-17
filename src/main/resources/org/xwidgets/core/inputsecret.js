@@ -38,3 +38,4 @@ org.xwidgets.core.InputSecret = xw.Visual.extend({
     return "org.xwidgets.core.InputSecret[" + this.id.value + "]";
   }
 });
+//# sourceURL=inputsecret.js

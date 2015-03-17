@@ -86,5 +86,5 @@ org.xwidgets.core.Splitter = xw.Visual.extend({
     
   }
 });
-
+//# sourceURL=splitter.js
 

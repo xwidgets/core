@@ -73,5 +73,5 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
     return "org.xwidgets.core.Repeat[]";
   }
 });
-
+//# sourceURL=repeat.js
 

@@ -66,3 +66,4 @@ org.xwidgets.core.TextArea = xw.Visual.extend({
     return "org.xwidgets.core.TextArea[" + this.id.value + "]";
   }
 });
+//# sourceURL=textarea.js

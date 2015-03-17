@@ -23,3 +23,4 @@ org.xwidgets.core.Label = xw.Visual.extend({
     return "org.xwidgets.core.Label[" + this.id.value + "]";
   }
 });
+//# sourceURL=label.js

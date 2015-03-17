@@ -34,3 +34,4 @@ org.xwidgets.core.EventObserver = xw.NonVisual.extend({
     }
   }
 });
+//# sourceURL=eventobserver.js

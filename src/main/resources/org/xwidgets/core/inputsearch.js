@@ -61,3 +61,4 @@ org.xwidgets.core.InputSearch = xw.Visual.extend({
     return "org.xwidgets.core.InputSearch[" + this.id.value + "]";
   }
 });
+//# sourceURL=inputsearch.js

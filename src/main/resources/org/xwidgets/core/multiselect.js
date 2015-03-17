@@ -109,4 +109,4 @@ org.xwidgets.core.MultiSelect = xw.Visual.extend({
     return "org.xwidgets.core.MultiSelection[" + this.id.value + "]";
   }
 });
-
+//# sourceURL=multiselect.js

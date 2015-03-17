@@ -1538,6 +1538,10 @@ xw.Property = function(owner, name, options) {
   }
 };
 
+xw.Property.prototype.isSet = function() {
+	return xw.Sys.isDefined(this.value);
+};
+
 /* Simple JavaScript Inheritance
  * By John Resig http://ejohn.org/
  * MIT Licensed.

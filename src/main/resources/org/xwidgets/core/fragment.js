@@ -34,3 +34,4 @@ org.xwidgets.core.Fragment = xw.Visual.extend({
     }
   }
 });
+//# sourceURL=fragment.js

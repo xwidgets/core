@@ -88,3 +88,4 @@ org.xwidgets.core.RichEdit = xw.Visual.extend({
     }
   }
 });
+//# sourceURL=richedit.js

@@ -45,4 +45,4 @@ org.xwidgets.core.FileUpload.prototype.buildTemplate = function() {
          "<ul class=\"qq-upload-list\"></ul>" + 
          "</div>";
 };
-
+//# sourceURL=fileupload.js

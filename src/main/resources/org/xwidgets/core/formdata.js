@@ -15,3 +15,4 @@ org.xwidgets.core.FormData = xw.NonVisual.extend({
     this._super();
   }
 });
+//# sourceURL=formdata.js

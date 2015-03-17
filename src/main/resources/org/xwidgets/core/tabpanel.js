@@ -199,4 +199,5 @@ org.xwidgets.core.TabPanel = xw.Visual.extend({
     return "org.xwidgets.core.TabPanel[" + this.id.value + "]";
   }
 });
+//# sourceURL=tabpanel.js
 

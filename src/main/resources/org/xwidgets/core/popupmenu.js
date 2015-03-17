@@ -119,3 +119,4 @@ org.xwidgets.core.PopupMenu.documentMouseDown = function(event) {
   xw.Sys.unchainEvent(document.body, "mousedown", org.xwidgets.core.PopupMenu.documentMouseDown);
   xw.Sys.cancelEventBubble(event);
 };
+//# sourceURL=popupmenu.js

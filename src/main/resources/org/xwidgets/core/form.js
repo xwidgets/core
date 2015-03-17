@@ -39,4 +39,4 @@ org.xwidgets.core.Form = xw.Visual.extend({
     this._super();
   }
 });
-
+//# sourceURL=form.js

@@ -47,4 +47,4 @@ org.xwidgets.core.Checkbox = xw.Visual.extend({
     this._super();
   }
 });
-
+//# sourceURL=checkbox.js

@@ -23,4 +23,4 @@ org.xwidgets.core.Link = xw.Visual.extend({
     }
   }
 });
-    
+//# sourceURL=link.js    

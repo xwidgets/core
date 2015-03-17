@@ -22,8 +22,18 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
   renderItem: function(menuItem, container) {
     if (menuItem.control == null) {
       menuItem.control = document.createElement("div");
+           
+      var img = null;
       
-      menuItem.control.appendChild(document.createTextNode(menuItem.label.value === null ? "" : menuItem.label.value));
+      if (menuItem.icon.isSet()) {
+      	img = document.createElement("img");
+      	img.src = menuItem.icon.value;
+        menuItem.control.appendChild(img);
+      };
+
+      var sp = document.createElement("span");
+      menuItem.control.appendChild(sp);
+      sp.appendChild(document.createTextNode(menuItem.label.isSet() ? menuItem.label.value : ""));
       
       if (menuItem.children.length > 0) {
         var icon = document.createElement("i");
@@ -40,20 +50,22 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
       var clickEvent = function(event) {
         that.clickItem(menuItem, event);
       }
+      
+      var ctl = img != null ? img : menuItem.control;
             
-      xw.Sys.chainEvent(menuItem.control, "click", clickEvent);
+      xw.Sys.chainEvent(ctl, "click", clickEvent);
       
       // Disable default text selection behaviour
       var mouseDownEvent = function(event) {
         xw.Sys.cancelEventBubble(event);
       };
-      xw.Sys.chainEvent(menuItem.control, "mousedown", mouseDownEvent);
+      xw.Sys.chainEvent(ctl, "mousedown", mouseDownEvent);
       
       if (menuItem.children.length > 0) {
         var mouseOverEvent = function(event) {
           menuItem.mouseOver(event);
         }
-        xw.Sys.chainEvent(menuItem.control, "mouseover", mouseOverEvent);
+        xw.Sys.chainEvent(ctl, "mouseover", mouseOverEvent);
       }
     }  
   },
@@ -218,3 +230,4 @@ org.xwidgets.core.MenuBar.documentMouseDown = function(event) {
   xw.Sys.unchainEvent(document.body, "mousedown", org.xwidgets.core.MenuBar.documentMouseDown);
   xw.Sys.cancelEventBubble(event);
 };
+//# sourceURL=menubar.js

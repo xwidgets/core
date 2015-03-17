@@ -82,3 +82,4 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
     return "org.xwidgets.core.RestEndpoint[" + this.method.value + ":" + this.url + "]";
   }
 });
+//# sourceURL=restendpoint.js

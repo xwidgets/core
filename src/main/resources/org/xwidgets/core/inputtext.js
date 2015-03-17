@@ -56,3 +56,4 @@ org.xwidgets.core.InputText = xw.Visual.extend({
     return "org.xwidgets.core.InputText[" + this.id.value + "]";
   }
 });
+//# sourceURL=inputtext.js

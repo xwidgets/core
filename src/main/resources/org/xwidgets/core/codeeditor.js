@@ -38,3 +38,4 @@ org.xwidgets.core.CodeEditor = xw.Visual.extend({
     }
   }
 });
+//# sourceURL=codeeditor.js
