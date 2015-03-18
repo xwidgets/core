@@ -18,7 +18,7 @@ org.xwidgets.core.Button = xw.Visual.extend({
       
       this.renderChildren(this.control);
       
-      if (xw.Sys.isDefined(this.styleClass.value)) {
+      if (this.styleClass.isSet()) {
         this.control.className = this.styleClass.value;
       }
       container.appendChild(this.control);

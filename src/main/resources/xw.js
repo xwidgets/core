@@ -1334,8 +1334,16 @@ xw.Controller = {
         widget.owner = owner;
         
         // Set the widget's attributes
-        for (var p in c.attributes) {       
-          xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+        for (var p in c.attributes) {
+        	if (xw.Array.contains(widget._registeredEvents, p)) {
+		        var action = new xw.Action();
+		        action.parent = widget;
+		        action.script = c.attributes[p];
+		        action.owner = owner;
+		        widget[p] = action;
+        	} else {
+            xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+          }
         }
         
         widgets.push(widget);
@@ -1591,6 +1599,7 @@ xw.Widget = xw.Class.extend({
     this.parent = null;
     this.owner = null;
     this.children = [];
+    this._registeredEvents = [];
     this.registerProperty("id", {listener: this.updateId});
   },
   updateId: function(id) {
@@ -1643,10 +1652,6 @@ xw.Widget = xw.Class.extend({
     }
   },
   registerEvent: function(eventName) {
-    if (xw.Sys.isUndefined(this._registeredEvents)) {
-      // metadata containing the known events for this widget
-      this._registeredEvents = [];        
-    }
     if (!xw.Array.contains(this._registeredEvents, eventName)) {
       this._registeredEvents.push(eventName);
     }
