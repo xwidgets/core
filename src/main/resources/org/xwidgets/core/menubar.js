@@ -11,8 +11,8 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
   render: function(container) {
     if (this.control == null) {
       this.control = document.createElement("div");
-      if (xw.Sys.isDefined(this.styleClass.value)) {
-        this.control.className = this.styleClass.value;
+      if (xw.Sys.isDefined(this.styleClass)) {
+        this.control.className = this.styleClass;
       }
       container.appendChild(this.control);
     }
@@ -25,15 +25,15 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
            
       var img = null;
       
-      if (menuItem.icon.isSet()) {
+      if (xw.Sys.isDefined(menuItem.icon)) {
       	img = document.createElement("img");
-      	img.src = menuItem.icon.value;
+      	img.src = menuItem.icon;
         menuItem.control.appendChild(img);
       };
 
       var sp = document.createElement("span");
       menuItem.control.appendChild(sp);
-      sp.appendChild(document.createTextNode(menuItem.label.isSet() ? menuItem.label.value : ""));
+      sp.appendChild(document.createTextNode(xw.Sys.isDefined(menuItem.label) ? menuItem.label : ""));
       
       if (menuItem.children.length > 0) {
         var icon = document.createElement("i");
@@ -41,8 +41,8 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
         menuItem.control.appendChild(icon);
       }
       
-      if (xw.Sys.isDefined(menuItem.styleClass.value)) {
-        menuItem.control.className = menuItem.styleClass.value;
+      if (xw.Sys.isDefined(menuItem.styleClass)) {
+        menuItem.control.className = menuItem.styleClass;
       }
       container.appendChild(menuItem.control);
 
@@ -113,8 +113,8 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
         var c = menuItem.submenuContainer;
         if (c == null) {
           c = document.createElement("div");
-          if (xw.Sys.isDefined(menuItem.submenuStyleClass.value)) {
-            c.className = menuItem.submenuStyleClass.value;
+          if (xw.Sys.isDefined(menuItem.submenuStyleClass)) {
+            c.className = menuItem.submenuStyleClass;
           }
           
           c.style.position = "absolute";
@@ -144,15 +144,15 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
         
         menuItem.submenuContainer.style.display = "";
       }
-      if (xw.Sys.isDefined(menuItem.selectedStyleClass.value)) {
-        menuItem.control.className = menuItem.selectedStyleClass.value;
+      if (xw.Sys.isDefined(menuItem.selectedStyleClass)) {
+        menuItem.control.className = menuItem.selectedStyleClass;
       }
     } else {
       if (menuItem.submenuContainer) {
         menuItem.submenuContainer.style.display = "none";  
       }
-      if (xw.Sys.isDefined(menuItem.styleClass) && xw.Sys.isDefined(menuItem.styleClass.value)) {
-        menuItem.control.className = menuItem.styleClass.value;
+      if (xw.Sys.isDefined(menuItem.styleClass) && xw.Sys.isDefined(menuItem.styleClass)) {
+        menuItem.control.className = menuItem.styleClass;
       }
     }
   },
