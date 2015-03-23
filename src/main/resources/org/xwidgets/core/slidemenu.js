@@ -7,9 +7,12 @@ org.xwidgets.core.SlideMenu = xw.Visual.extend({
       "container": "xw_slidemenu xw_slidemenu_left",
       "has_sub": "has_sub"
     });     
-    this.registerProperty("align", {default: "left"});
+    this.registerProperty("align", {default: "left", onChange: this.setAlign});
+    this.registerProperty("width", {default: 300, onChange: this.setWidth});
+    this.registerProperty("height", {default: 300, onChange: this.setHeight});
     this.registerEvent("onclick");
     this.control = null;
+    this.mask = null;
     this.selectedMenuItem = null;
   },
   render: function(container) {
@@ -19,12 +22,46 @@ org.xwidgets.core.SlideMenu = xw.Visual.extend({
       var nav = document.createElement("nav");
       this.control.appendChild(nav);
       container.appendChild(this.control);
+      
+      this.mask = document.createElement("div");
+      this.mask.style.position = "fixed";
+      this.mask.style.top = "0px";
+      this.mask.style.left = "0px";
+      this.mask.style.zIndex = 15;
+      this.mask.style.width = "100%";
+      this.mask.style.height = "100%";
+      this.mask.style.background = "rgba(0, 0, 0, 0.8)";
+      var that = this;
+      xw.Sys.chainEvent(this.mask, "click", function() {
+      	that.closeMenu();
+      });
     }
     this.propagateChildProperty(org.xwidgets.core.MenuItem, "menu", this);
     this.renderChildren(nav);
   },
   toggle: function() {
-  	alert("toggled");
+  	document.body.appendChild(this.mask);
+  	this.control.style.left = "0px";
+  },
+  closeMenu: function() {
+    document.body.removeChild(this.mask); 
+    this.control.style.left = "";
+  },
+  setAlign: function(value) {  	
+  	alert("align: " + value);
+  	if (xw.Sys.isUndefined(this.control)) return;
+
+  	if (value == "left") {
+  	  	
+  	} else if (value == "right") {
+  		
+  	}
+  },
+  setWidth: function(value) {
+  	alert("setWidth" + value);
+  },
+  setHeight: function(value) {
+  	alert("setHeight: " + value);
   },
   renderItem: function(menuItem, container) {
     if (menuItem.control == null) {
@@ -32,7 +69,7 @@ org.xwidgets.core.SlideMenu = xw.Visual.extend({
       menuItem.control.className = "open";
       var anchor = document.createElement("a");
       anchor.href = "#";
-      anchor.appendChild(document.createTextNode(menuItem.label.value === null ? "" : menuItem.label.value));
+      anchor.appendChild(document.createTextNode(menuItem.label === null ? "" : menuItem.label));
       menuItem.control.appendChild(anchor);
       
       container.appendChild(menuItem.control);
@@ -106,6 +143,9 @@ org.xwidgets.core.SlideMenu = xw.Visual.extend({
       menuItem.control.parentNode.removeChild(menuItem.control);
       menuItem.control = null;
     }  
-  } 
+  },
+  toString: function() {
+    return "org.xwidgets.core.SlideMenu[]";	
+  }
 });
 //# sourceURL=slidemenu.js

@@ -13,13 +13,13 @@ org.xwidgets.core.Button = xw.Visual.extend({
     if (this.control == null) {
       this.control = document.createElement("button");
       var span = document.createElement("span");
-      span.appendChild(document.createTextNode(this.label.value === null ? "" : this.label.value));
+      span.appendChild(document.createTextNode(this.label === null ? "" : this.label));
       this.control.appendChild(span);
       
       this.renderChildren(this.control);
       
-      if (this.styleClass.isSet()) {
-        this.control.className = this.styleClass.value;
+      if (xw.Sys.isDefined(this.styleClass)) {
+        this.control.className = this.styleClass;
       }
       container.appendChild(this.control);
       this.addEvent(this.control, "click", this.onclick);
@@ -38,7 +38,7 @@ org.xwidgets.core.Button = xw.Visual.extend({
     this.control.disabled = false;
   },
   toString: function() {
-    return "org.xwidgets.core.Button[" + this.label.value + "]";
+    return "org.xwidgets.core.Button[" + this.label + "]";
   }
 });
 //# sourceURL=button.js

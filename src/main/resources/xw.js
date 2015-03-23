@@ -345,12 +345,12 @@ xw.Sys = {
         if (prop.type) {
           switch (prop.type) {
             case "boolean":
-              prop.value = (value === true || "true" === value) ? true : false;
+              prop = (value === true || "true" === value) ? true : false;
               break;
-            default: prop.value = value;
+            default: prop = value;
           }
         } else {
-          prop.value = value;
+          prop = value;
         }
       }
     } else {
@@ -1367,8 +1367,8 @@ xw.Controller = {
         widget = new xw.XHtml();      
         widget.parent = parentWidget;
         widget.owner = owner;
-        widget.tagName.value = c.tagName;
-        widget.attributes.value = c.attributes;
+        widget.tagName = c.tagName;
+        widget.attributes = c.attributes;
         widgets.push(widget);
         if (xw.Sys.isDefined(c.children) && c.children.length > 0) {
           xw.Controller.parseChildren(owner, c.children, widget);
@@ -1501,53 +1501,41 @@ xw.WidgetManager = {
 xw.Property = function(owner, name, options) {
   this.owner = owner;
   this.name = name;
-  if (options) {
-    this.listener = options.listener;
+  this.value = undefined;
+  
+  if (xw.Sys.isDefined(options)) {
     this.type = options.type;
-  }
-
-  var that = this;
-
-  var valueWatcher = function(prop, oldVal, newVal) {
-    // If neither the old or new value are defined, don't do anything
-    if (xw.Sys.isUndefined(oldVal) && xw.Sys.isUndefined(newVal)) {
-      return;
-    }
-    var that = this;
-    var newValue = newVal;
-       
-    // Invoke any property change listener that has been registered
-    if (xw.Sys.isDefined(that.listener)) {
-      var returnVal = that.listener.call(that.owner, newValue);
-      if (xw.Sys.isDefined(returnVal)) {
-        newValue = returnVal;
-      }
+    
+    if (xw.Sys.isDefined(options.default)) {
+      this.setValue(options.default);
     }
     
-    return newValue;
-  };
-  
-  var bindingWatcher = function(prop, oldVal, newVal) {
-    xw.EL.clearWidgetBinding(that.owner, that.name);
-    if (xw.EL.isExpression(newVal)) {
-      that.value = xw.EL.createBinding(that.owner, that.name, newVal);
+    if (xw.Sys.isDefined(options.onChange)) {
+      this.onChange = options.onChange;
     }
-    return newVal;
-  };
-     
-  this.watch("value", valueWatcher);
-  this.watch("binding", bindingWatcher);
-  
-  if (options) {
-    if (options.default) {
-      this.value = options.default;
-    }
-    this.required = xw.Sys.isDefined(options.required) ? options.required : false;
   }
 };
 
 xw.Property.prototype.isSet = function() {
 	return xw.Sys.isDefined(this.value);
+};
+
+xw.Property.prototype.getValue = function() {
+  return this.value;
+};
+
+xw.Property.prototype.setValue = function(val) {
+  xw.EL.clearWidgetBinding(this.owner, this.name);
+  if (xw.EL.isExpression(val)) {
+    this.value = xw.EL.createBinding(this.owner, this.name, val);
+    this.binding = val;
+  } else {
+    this.value = val;
+    this.binding = undefined;
+  }
+  if (xw.Sys.isDefined(this.onChange)) {
+    this.onChange.call(this.owner, this.value);
+  }
 };
 
 /* Simple JavaScript Inheritance
@@ -1598,9 +1586,10 @@ xw.Widget = xw.Class.extend({
   _constructor: function() {
     this.parent = null;
     this.owner = null;
-    this.children = [];
+    this._registeredProperties = [];
     this._registeredEvents = [];
-    this.registerProperty("id", {listener: this.updateId});
+    this.children = [];
+    this.registerProperty("id", {onChange: this.updateId});
   },
   updateId: function(id) {
     // register the id of this widget with the owning view.
@@ -1614,7 +1603,15 @@ xw.Widget = xw.Class.extend({
     if (xw.Sys.isUndefined(name)) {
       throw "No name specified for registered property on object [" + this.toString() + "]";
     }
-    this[name] = new xw.Property(this, name, options);
+    this._registeredProperties[name] = new xw.Property(this, name, options);
+    Object.defineProperty(this, name, {
+      get: function() { return this._registeredProperties[name].getValue() },
+      set: function(newValue) { 
+        this._registeredProperties[name].setValue(newValue);
+      },
+      enumerable: true,
+      configurable: true
+    });
   },
   // Sets the property value of all child nodes of a specified type
   propagateChildProperty: function(cls, propName, val) {
@@ -1683,15 +1680,15 @@ xw.Widget = xw.Class.extend({
         // TODO create a proper xw.Property.clone() method that does this
         var prop = this[p];
         o[p] = new xw.Property(o, prop.name);
-        o[p].listener = prop.listener;
+        o[p].onChange = prop.onChange;
         o[p].type = prop.type;
         if (xw.EL.isExpression(this[p].binding)) {
           o[p].binding = this[p].binding;
         } else {
-          if (this[p].value instanceof xw.Widget) {
-            o[p].value = this[p].value;
+          if (this[p] instanceof xw.Widget) {
+            o[p] = this[p];
           } else {
-            o[p].value = xw.Sys.cloneObject(this[p].value);
+            o[p] = xw.Sys.cloneObject(this[p]);
           }
         }
       } else if (this[p] instanceof xw.Action) {
@@ -1712,7 +1709,7 @@ xw.Widget = xw.Class.extend({
     return o;
   },
   toString: function() {
-    return "xw.Widget[" + this.id.value + "]";
+    return "xw.Widget[" + this.id + "]";
   }
 });
 
@@ -1749,7 +1746,7 @@ xw.Visual = xw.Widget.extend({
   },
   registerStyles: function(values) {
     for (var n in values) {
-      this.styles.value[n] = values[n];
+      this.styles[n] = values[n];
     }
   },
   setStyleClass: function(control, styleName) {
@@ -1758,12 +1755,12 @@ xw.Visual = xw.Widget.extend({
     }
   },
   getStyle: function(name) {
-    return this.isStyleSet(name) ? this.styles.value[name] : null;
+    return this.isStyleSet(name) ? this.styles[name] : null;
   },
   isStyleSet: function(name) {
     return xw.Sys.isDefined(this.styles) && 
-      xw.Sys.isDefined(this.styles.value) && 
-      xw.Sys.isDefined(this.styles.value[name]);
+      xw.Sys.isDefined(this.styles) && 
+      xw.Sys.isDefined(this.styles[name]);
   }
 });
 
@@ -1796,9 +1793,9 @@ xw.XHtml = xw.Visual.extend({
     this.control = null;  
   },
   render: function(container) {
-    this.control = document.createElement(this.tagName.value);
-    for (var a in this.attributes.value) {
-      var val = this.attributes.value[a];
+    this.control = document.createElement(this.tagName);
+    for (var a in this.attributes) {
+      var val = this.attributes[a];
       if (xw.EL.isExpression(val)) {
         this.setAttribute(a, xw.EL.eval(this, val));
       } else {
@@ -1814,14 +1811,14 @@ xw.XHtml = xw.Visual.extend({
     } else if (attribName == "style") {
       this.control.style.cssText = value;
     // TODO standardize attribute replacement
-    } else if (this.control.tagName.value == "label" && attribName == "for") {
+    } else if (this.control.tagName == "label" && attribName == "for") {
       this.control.htmlFor = value;
     } else {
       this.control[attribName] = value;
     }
   },
   toString: function() {
-    return "xw.XHtml[" + this.tagName.value + "]"; 
+    return "xw.XHtml[" + this.tagName + "]"; 
   }
 });
 
@@ -1831,14 +1828,14 @@ xw.Text = xw.Visual.extend({
     this._super(false);
     delete children;
     var that = this;
-    this.registerProperty("value", {listener: this.renderText});
+    this.registerProperty("value", {onChange: this.renderText});
     this.registerProperty("escape", {default: true});
     this.control = null;  
   },
   render: function(container) {
     this.control = document.createElement("span");
     container.appendChild(this.control);
-    this.renderText(this.value.value);
+    this.renderText(this.value);
   },
   renderText: function(value) {
     if (this.control !== null) {
@@ -1876,7 +1873,7 @@ xw.Action = xw.NonVisual.extend({
       
       // register variables for all widgets within the same view/data module with an id
       xw.Array.iterate(this.owner._registeredWidgets, function(element) {
-        __registered[element.id.value] = element;
+        __registered[element.id] = element;
       });
 
       // register variables for all widgets with an id from any data modules, if there
@@ -1884,8 +1881,8 @@ xw.Action = xw.NonVisual.extend({
       for (var i = 0; i < xw.Controller.activeDataModules.length; i++) {
         var dm = xw.Controller.activeDataModules[i];
         xw.Array.iterate(dm._registeredWidgets, function(element) {
-          if (xw.Sys.isUndefined(__registered[element.id.value])) {
-            __registered[element.id.value] = element;
+          if (xw.Sys.isUndefined(__registered[element.id])) {
+            __registered[element.id] = element;
           }       
         });
       }
@@ -1976,7 +1973,7 @@ xw.View = xw.Container.extend({
   },
   getWidgetById: function(id) {
     for (var i = 0; i < this._registeredWidgets.length; i++) {
-      if (this._registeredWidgets[i].id.value == id) {
+      if (this._registeredWidgets[i].id == id) {
         return this._registeredWidgets[i];
       }
     }
@@ -2028,7 +2025,7 @@ xw.DataModule = xw.NonVisual.extend({
   },
   getWidgetById: function(id) {
     for (var i = 0; i < this._registeredWidgets.length; i++) {
-      if (this._registeredWidgets[i].id.value == id) {
+      if (this._registeredWidgets[i].id == id) {
         return this._registeredWidgets[i];
       }
     }
@@ -2229,7 +2226,7 @@ xw.ready = {
     
     for (var i = 0; i < xwNodes.length; i++) {
       // TODO implement params support
-      xw.Controller.open(xwNodes[i].attributes.getNamedItem("name").value, null, xwNodes[i].parentNode);
+      xw.Controller.open(xwNodes[i].attributes.getNamedItem("name"), null, xwNodes[i].parentNode);
     }
   }  
 };
