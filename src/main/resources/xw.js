@@ -1231,7 +1231,7 @@ xw.Controller = {
   // Loads the view definition from the server
   //
   loadResource: function(resource) { 
-    var path = xw.viewPath == null ? resource : (xw.viewPath + resource);    
+    var path = xw.viewPath == null ? resource : (xw.viewPath + resource);
 
     // If there is a script for this view, load it first
     var script = path.replace(/\.[^/.]+$/, "") + ".js";    
@@ -2226,7 +2226,7 @@ xw.ready = {
     
     for (var i = 0; i < xwNodes.length; i++) {
       // TODO implement params support
-      xw.Controller.open(xwNodes[i].attributes.getNamedItem("name"), null, xwNodes[i].parentNode);
+      xw.Controller.open(xwNodes[i].attributes.getNamedItem("name").value, null, xwNodes[i].parentNode);
     }
   }  
 };
