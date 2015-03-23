@@ -4,12 +4,12 @@ org.xwidgets.core.SlideMenu = xw.Visual.extend({
   _constructor: function() {
     this._super();
     this.registerStyles({
-      "container": "xw_slidemenu xw_slidemenu_left",
+      "container": "xw_slidemenu",
       "has_sub": "has_sub"
     });     
-    this.registerProperty("align", {default: "left", onChange: this.setAlign});
-    this.registerProperty("width", {default: 300, onChange: this.setWidth});
-    this.registerProperty("height", {default: 300, onChange: this.setHeight});
+    this.registerProperty("align", {default: "left", onChange: this.updateStyle});
+    this.registerProperty("width", {default: 300, onChange: this.updateStyle});
+    this.registerProperty("height", {default: 300, onChange: this.updateStyle});
     this.registerEvent("onclick");
     this.control = null;
     this.mask = null;
@@ -21,6 +21,9 @@ org.xwidgets.core.SlideMenu = xw.Visual.extend({
       this.setStyleClass(this.control, "container");
       var nav = document.createElement("nav");
       this.control.appendChild(nav);
+
+      this.updateStyle();
+
       container.appendChild(this.control);
       
       this.mask = document.createElement("div");
@@ -41,27 +44,37 @@ org.xwidgets.core.SlideMenu = xw.Visual.extend({
   },
   toggle: function() {
   	document.body.appendChild(this.mask);
-  	this.control.style.left = "0px";
+  	if (this.align == "left") {
+    	this.control.style.left = "0px";
+    } else if (this.align == "right") {
+      this.control.style.right = "0px";
+    }
   },
   closeMenu: function() {
-    document.body.removeChild(this.mask); 
-    this.control.style.left = "";
+    document.body.removeChild(this.mask);
+    if (this.align == "left") {
+      this.control.style.left = "-" + this.width + "px";
+    } else if (this.align == "right") {
+      this.control.style.right = "-" + this.width + "px";
+    }
   },
-  setAlign: function(value) {  	
-  	alert("align: " + value);
-  	if (xw.Sys.isUndefined(this.control)) return;
-
-  	if (value == "left") {
-  	  	
-  	} else if (value == "right") {
-  		
-  	}
-  },
-  setWidth: function(value) {
-  	alert("setWidth" + value);
-  },
-  setHeight: function(value) {
-  	alert("setHeight: " + value);
+  updateStyle: function() {
+  	if (this.control != null) {
+      var s = this.control.style;
+      
+      if (this.align == "left") {
+        s.top = 0;
+        s.width = this.width + "px";
+        s.height = "100%";
+        s.left = "-" + this.width + "px";
+    	} else if (this.align == "right") {
+        s.top = 0;
+        s.width = this.width + "px";
+        s.height = "100%";
+        s.left = "";
+        s.right = "-" + this.width + "px";  		
+    	}
+    }
   },
   renderItem: function(menuItem, container) {
     if (menuItem.control == null) {
