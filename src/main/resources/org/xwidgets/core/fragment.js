@@ -3,7 +3,7 @@ package("org.xwidgets.core");
 org.xwidgets.core.Fragment = xw.Visual.extend({
   _constructor: function() {
     this._super(false);
-    this.registerProperty("rendered", {default: false, listener: this.doRender});  
+    this.registerProperty("rendered", {default: false, onChange: this.doRender});  
     this.childrenRendered = false;
     this.control = null;
   },
@@ -11,7 +11,7 @@ org.xwidgets.core.Fragment = xw.Visual.extend({
     if (this.control == null) {
       this.control = document.createElement("span");
       container.appendChild(this.control);
-      this.doRender(this.rendered.value);
+      this.doRender(this.rendered);
     }    
   },
   doRender: function(rendered) {
@@ -20,7 +20,9 @@ org.xwidgets.core.Fragment = xw.Visual.extend({
     }
     
     if (xw.Sys.isUndefined(rendered)) {
-      xw.Log.warn("fragment rendered variable " + this.rendered.binding + " is undefined");
+      xw.Log.debug("fragment rendered variable " + 
+        this._registeredProperties["rendered"].binding + 
+        " is undefined");
     }    
 
     if (rendered === true) {

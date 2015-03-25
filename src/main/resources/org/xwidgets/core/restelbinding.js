@@ -11,11 +11,11 @@ org.xwidgets.core.RestELBinding = xw.NonVisual.extend({
   open: function() {
     var that = this;
     var cb = function(result) { that.restCallback(result); };
-    this.restEndpoint.value.callback.value = cb;
+    this.restEndpoint.callback = cb;
     xw.EL.registerResolver(this);
   },
   restCallback: function(result) {
-    if ("JSON" == this.mode.value) {
+    if ("JSON" == this.mode) {
       result = JSON.parse(result);
     }
 
@@ -30,17 +30,17 @@ org.xwidgets.core.RestELBinding = xw.NonVisual.extend({
 
     this.value = result;
 
-    xw.EL.notify(this.binding.value);
+    xw.EL.notify(this.binding);
   },
   canResolve: function(expr) {
-    return expr == this.binding.value;
+    return expr == this.binding;
   },
   resolve: function(expr) {
-    if (expr == this.binding.value) {
+    if (expr == this.binding) {
       if (xw.Sys.isDefined(this.value)) {
         return this.value;
       } else {
-        this.restEndpoint.value.invoke();
+        this.restEndpoint.invoke();
       }
     }
   },
@@ -48,7 +48,7 @@ org.xwidgets.core.RestELBinding = xw.NonVisual.extend({
     xw.EL.unregisterResolver(this);
   },
   toString: function() {
-    return "org.xwidgets.core.RestELBinding[" + this.binding.value + "]";
+    return "org.xwidgets.core.RestELBinding[" + this.binding + "]";
   }
 });
 

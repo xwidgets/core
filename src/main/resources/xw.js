@@ -335,28 +335,6 @@ xw.Sys = {
       return doc;
     }
   },
-  setObjectProperty: function(obj, property, value) {
-    var prop = obj[property] instanceof xw.Property ? obj[property] : null;
-  
-    if (prop) {
-      if (xw.EL.isExpression(value)) {
-        prop.binding = value;
-      } else {
-        if (prop.type) {
-          switch (prop.type) {
-            case "boolean":
-              prop = (value === true || "true" === value) ? true : false;
-              break;
-            default: prop = value;
-          }
-        } else {
-          prop = value;
-        }
-      }
-    } else {
-      obj[property] = value;
-    }
-  },
   clearChildren: function(e) {
     while (xw.Sys.isDefined(e) && e.hasChildNodes()) {
       e.removeChild(e.firstChild);
@@ -584,7 +562,9 @@ xw.EL = {
       
       if (match) {
         if (binding.propertyName) {
-          xw.Sys.setObjectProperty(binding.widget, binding.propertyName, binding.value);    
+          // If the binding is for a widget property, "touch" the property so that it refreshes
+          binding.widget._registeredProperties[binding.propertyName].touch();
+//          xw.Sys.setObjectProperty(binding.widget, binding.propertyName, binding.value);    
         } else if (binding.callback) {
           binding.callback.apply(binding.widget, [binding.value]);
         }
@@ -634,6 +614,14 @@ xw.EL = {
       }
     }
   },
+  lookupResolver: function(rootExpr) {
+    for (var i = 0; i < xw.EL.resolvers.length; i++) {    
+      if (xw.EL.resolvers[i].canResolve(rootExpr)) {
+        return xw.EL.resolvers[i];
+      }
+    }
+    return null;
+  },
   eval: function(widget, expr) {
     var e = xw.EL.regex(expr);
     if (e === null) {
@@ -668,11 +656,9 @@ xw.EL = {
         root = w;
       // Last, we check all of the registered EL resolvers
       } else {
-        for (var i = 0; i < xw.EL.resolvers.length; i++) {    
-          if (xw.EL.resolvers[i].canResolve(parts[0])) {
-            root = xw.EL.resolvers[i].resolve(parts[0]);
-            break;
-          }
+        var r = xw.EL.lookupResolver(parts[0]);
+        if (r != null) {
+          root = r.resolve(parts[0]);
         }
       }
     }
@@ -1342,7 +1328,8 @@ xw.Controller = {
 		        action.owner = owner;
 		        widget[p] = action;
         	} else {
-            xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+        	  widget[p] = c.attributes[p];
+//            xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
           }
         }
         
@@ -1381,7 +1368,8 @@ xw.Controller = {
         
         // Set the widget's attributes
         for (var p in c.attributes) { 
-          xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
+          widget[p] = c.attributes[p];
+//          xw.Sys.setObjectProperty(widget, p, c.attributes[p]);
         }
               
         widgets.push(widget);
@@ -1524,6 +1512,18 @@ xw.Property.prototype.getValue = function() {
   return this.value;
 };
 
+/*
+ * Called when the bound EL expression evaluates to an updated value
+ */
+xw.Property.prototype.touch = function() {
+  if (xw.Sys.isDefined(this.binding)) {
+    this.value = xw.EL.eval(this.owner, this.binding);
+    if (xw.Sys.isDefined(this.onChange)) {
+      this.onChange.call(this.owner, this.value);
+    }    
+  }
+};
+
 xw.Property.prototype.setValue = function(val) {
   xw.EL.clearWidgetBinding(this.owner, this.name);
   if (xw.EL.isExpression(val)) {
@@ -1531,7 +1531,7 @@ xw.Property.prototype.setValue = function(val) {
     this.binding = val;
   } else {
     this.value = val;
-    this.binding = undefined;
+    delete this["binding"];
   }
   if (xw.Sys.isDefined(this.onChange)) {
     this.onChange.call(this.owner, this.value);
@@ -1619,7 +1619,8 @@ xw.Widget = xw.Class.extend({
       if (xw.Sys.isDefined(p.children)) {
         for (var i = 0; i < p.children.length; i++) {
           if (p.children[i] instanceof cls) {
-            xw.Sys.setObjectProperty(p.children[i], propName, val);
+            p.children[i][propName] = val;
+//            xw.Sys.setObjectProperty(p.children[i], propName, val);
           }
           f(p.children[i]);
         }

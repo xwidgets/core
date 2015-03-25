@@ -11,9 +11,9 @@ org.xwidgets.core.Link = xw.Visual.extend({
   render: function(container) {
     if (this.control == null) {  
       this.control = document.createElement("a");
-      this.control.className = this.styleClass.value;
-      if (xw.Sys.isDefined(this.caption.value)) {
-        this.control.appendChild(document.createTextNode(this.caption.value));
+      this.control.className = this.styleClass;
+      if (xw.Sys.isDefined(this.caption)) {
+        this.control.appendChild(document.createTextNode(this.caption));
       }
       this.control.href = "#";
       this.addEvent(this.control, "click", this.onclick);

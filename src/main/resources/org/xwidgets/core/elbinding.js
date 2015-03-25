@@ -7,12 +7,10 @@ org.xwidgets.core.ELBinding = xw.NonVisual.extend({
     this.registerEvent("onbind");
   },
   open: function() {
+    xw.EL.registerResolver(this);
     if (xw.Sys.isUndefined(this.value) && xw.Sys.isDefined(this.onbind)) {
       this.value = this.onbind.invoke(this);
     }
-    
-    xw.EL.registerResolver(this);
-    xw.EL.notify(this.binding);
   },
   canResolve: function(expr) {
     return expr == this.binding;
