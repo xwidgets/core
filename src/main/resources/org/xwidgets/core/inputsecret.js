@@ -24,10 +24,10 @@ org.xwidgets.core.InputSecret = xw.Visual.extend({
   },
   checkValueChanged: function(event) {
     var value = this.control.value;
-    if (value != this.value.value) {
-      this.value.value = value;
-      if (this.formData.value != null) {
-        this.formData.value.updateValue(this.name.value, this.value.value);
+    if (value != this.value) {
+      this.value = value;
+      if (this.formData != null) {
+        this.formData.updateValue(this.name, this.value);
       }
     }
   },
@@ -35,7 +35,7 @@ org.xwidgets.core.InputSecret = xw.Visual.extend({
     return this.control.value;
   },
   toString: function() {
-    return "org.xwidgets.core.InputSecret[" + this.id.value + "]";
+    return "org.xwidgets.core.InputSecret[" + this.id + "]";
   }
 });
 //# sourceURL=inputsecret.js

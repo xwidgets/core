@@ -7,9 +7,9 @@ org.xwidgets.core.Surrogate = xw.NonVisual.extend({
     this.meta = null;
   },
   resolve: function(name) {
-    if (name == this.parent.var.value) {
-      return this.value.value;
-    } else if (name == this.parent.metaVar.value) {
+    if (name == this.parent.var) {
+      return this.value;
+    } else if (name == this.parent.metaVar) {
       return this.meta;
     }
   },
@@ -21,7 +21,7 @@ org.xwidgets.core.Surrogate = xw.NonVisual.extend({
 org.xwidgets.core.Repeat = xw.Visual.extend({
   _constructor: function() {
     this._super();
-    this.registerProperty("value", {default:null, listener: this.updateValue}); 
+    this.registerProperty("value", {default:null, onChange: this.renderChildren}); 
     this.registerProperty("var", {default: null});
     this.registerProperty("metaVar", {default: "meta"});
     this.control = document.createElement("span");
@@ -29,23 +29,23 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
   },  
   render: function(container) {
     container.appendChild(this.control);
-    this.renderChildren(this.value.value);
+    this.renderChildren();
   },
-  renderChildren: function(value) {
+  renderChildren: function() {
     xw.Sys.clearChildren(this.control);
 
-    if (value != null) {
+    if (this.value != null) {
       this.surrogates = [];  
 
       try {
-        for (var i = 0; i < value.length; i++) {
+        for (var i = 0; i < this.value.length; i++) {
 
-          var surrogate = new org.xwidgets.core.Surrogate(value[i]);          
+          var surrogate = new org.xwidgets.core.Surrogate(this.value[i]);          
           surrogate.parent = this;
           surrogate.meta = {};
           // Set the meta variables
           surrogate.meta.first = (i == 0);
-          surrogate.meta.last = (i == (value.length - 1));
+          surrogate.meta.last = (i == (this.value.length - 1));
           surrogate.meta.odd = (i % 2);
           surrogate.meta.even = !surrogate.meta.odd;
           this.surrogates.push(surrogate);
@@ -65,9 +65,6 @@ org.xwidgets.core.Repeat = xw.Visual.extend({
         this.afterRender.invoke();
       };     
     }
-  },
-  updateValue: function(value) {
-    this.renderChildren(value);
   },
   toString: function() {
     return "org.xwidgets.core.Repeat[]";

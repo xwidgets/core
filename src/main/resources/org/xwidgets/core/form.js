@@ -10,7 +10,7 @@ org.xwidgets.core.Form = xw.Visual.extend({
   render: function(container) {
     if (this.control == null) {
       this.control = document.createElement("form");
-      this.control.className = this.styleClass.value;        
+      this.control.className = this.styleClass;        
       container.appendChild(this.control);
       
       this.renderChildren(this.control);

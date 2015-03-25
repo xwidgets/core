@@ -14,8 +14,8 @@ org.xwidgets.core.EventObserver = xw.NonVisual.extend({
     }
   },
   register: function() {
-    if (typeof this.event.value === "string") {
-      xw.Event.registerObserver(this.event.value, this);
+    if (typeof this.event === "string") {
+      xw.Event.registerObserver(this.event, this);
     }
   },
   fire: function(params) {
@@ -24,10 +24,10 @@ org.xwidgets.core.EventObserver = xw.NonVisual.extend({
     }; 
   },
   setEvent: function(event) {
-    if (typeof this.event.value === "string" && this.opened) {
+    if (typeof this.event === "string" && this.opened) {
       xw.Event.unregisterObserver(this);
     }
-    this.event.value = event;
+    this.event = event;
     
     if (this.opened) {
       this.register();

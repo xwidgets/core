@@ -19,22 +19,22 @@ org.xwidgets.core.InputText = xw.Visual.extend({
         that.checkValueChanged.call(that, evt);
       }
       xw.Sys.chainEvent(this.control, "keyup", cb);
-      this.control.className = this.styleClass.value;
-      if (this.name.value != null) {
-        this.control.name = this.name.value;
+      this.control.className = this.styleClass;
+      if (this.name != null) {
+        this.control.name = this.name;
       }
-      if (this.value.value != null) {
-        this.control.value = this.value.value;
+      if (this.value != null) {
+        this.control.value = this.value;
       }
       container.appendChild(this.control);
     }
   },
   checkValueChanged: function(event) {
     var value = this.control.value;
-    if (value != this.value.value) {
-      this.value.value = value;
-      if (this.formData.value != null) {
-        this.formData.value.updateValue(this.name.value, this.value.value);
+    if (value != this.value) {
+      this.value = value;
+      if (this.formData != null) {
+        this.formData.updateValue(this.name, this.value);
       }
     }
   },
@@ -42,9 +42,9 @@ org.xwidgets.core.InputText = xw.Visual.extend({
     return this.control.value;
   },
   setValue: function(value) {
-    this.value.value = value;
+    this.value = value;
     if (this.control != null) {
-      this.control.value = this.value.value;
+      this.control.value = this.value;
     }
   },
   focus: function() {
@@ -53,7 +53,7 @@ org.xwidgets.core.InputText = xw.Visual.extend({
     }
   },
   toString: function() {
-    return "org.xwidgets.core.InputText[" + this.id.value + "]";
+    return "org.xwidgets.core.InputText[" + this.id + "]";
   }
 });
 //# sourceURL=inputtext.js

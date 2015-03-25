@@ -19,16 +19,16 @@ org.xwidgets.core.InputSearch = xw.Visual.extend({
       this.control = document.createElement("input");
       this.control.type = "text";
 
-      if (this.styleClass.value != null) {
-        this.control.className = this.styleClass.value;
+      if (this.styleClass != null) {
+        this.control.className = this.styleClass;
       }
 
-      if (this.value.value != null) {
-        this.control.value = this.value.value;
+      if (this.value != null) {
+        this.control.value = this.value;
       }
       
-      if (this.placeholder.value != null) {
-        this.control.placeholder = this.placeholder.value;
+      if (this.placeholder != null) {
+        this.control.placeholder = this.placeholder;
       }
       
       var that = this;
@@ -58,7 +58,7 @@ org.xwidgets.core.InputSearch = xw.Visual.extend({
     }    
   },
   toString: function() {
-    return "org.xwidgets.core.InputSearch[" + this.id.value + "]";
+    return "org.xwidgets.core.InputSearch[" + this.id + "]";
   }
 });
 //# sourceURL=inputsearch.js
