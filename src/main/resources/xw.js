@@ -1586,6 +1586,7 @@ xw.Widget = xw.Class.extend({
   _constructor: function() {
     this.parent = null;
     this.owner = null;
+    this.uid = xw.Sys.uid();
     this._registeredProperties = [];
     this._registeredEvents = [];
     this.children = [];
@@ -1836,12 +1837,12 @@ xw.Text = xw.Visual.extend({
   render: function(container) {
     this.control = document.createElement("span");
     container.appendChild(this.control);
-    this.renderText(this.value);
+    this.renderText();
   },
-  renderText: function(value) {
+  renderText: function() {
     if (this.control !== null) {
-      var text = (xw.Sys.isDefined(value) && value !== null) ?
-         value : "";
+      var text = (xw.Sys.isDefined(this.value) && this.value !== null) ?
+         this.value : "";
       if (this.escape) {
         this.control.innerHTML = text;
       } else {

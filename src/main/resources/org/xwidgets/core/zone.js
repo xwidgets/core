@@ -3,8 +3,8 @@ package("org.xwidgets.core");
 org.xwidgets.core.Zone = xw.Visual.extend({
   _constructor: function() {
     this._super(false);
-    this.registerProperty("value", {default: null, listener: this.updateValue});
-    this.registerProperty("activeOn", {default: null, listener: this.updateActiveOn}); 
+    this.registerProperty("value", {default: null, onChange: this.updateValue});
+    this.registerProperty("activeOn", {default: null, onChange: this.updateActiveOn}); 
     this.childrenRendered = false;
     this.control = null;
     this.activeValues = [];
@@ -12,15 +12,15 @@ org.xwidgets.core.Zone = xw.Visual.extend({
   render: function(container) {
     if (this.control == null) {
       this.control = document.createElement("span");
-      this.updateValue(this.value.value);
+      this.updateValue(this.value);
       container.appendChild(this.control);
       this.renderChildren(this.control);
     }    
   },
-  updateValue: function(value) {
+  updateValue: function() {
     var disp = false;
     for (var i = 0; i < this.activeValues.length; i++) {
-      if (value == this.activeValues[i]) {
+      if (this.value == this.activeValues[i]) {
         disp = true;
       }
     }
@@ -28,8 +28,8 @@ org.xwidgets.core.Zone = xw.Visual.extend({
       this.control.style.display = disp ? "" : "none";
     }
   },
-  updateActiveOn: function(value) {
-    this.activeValues = value.split(",");
+  updateActiveOn: function() {
+    this.activeValues = this.activeOn.split(",");
   },
   toString: function() {
     return "org.xwidgets.core.Zone[" + this.activeOn + "]";

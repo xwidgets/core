@@ -10,6 +10,8 @@
     <script src="../../src/main/resources/xw.js" type="text/javascript"></script>
     <script src="../../src/main/resources/org/xwidgets/core/verticalmenu.js" type="text/javascript"></script>
     <script src="../../src/main/resources/org/xwidgets/core/menuitem.js" type="text/javascript"></script>
+    
+    <script src="../examples.js" type="text/javascript"></script> 
   </head>
   <body>
 
@@ -21,9 +23,7 @@
   
     <xw:menuItem label="General"/>
     <xw:menuItem label="Account">
-      <xw:menuItem label="Details">
-        <xw:event type="onclick"><xw:action type="script"><![CDATA[alert("clicked Details");]]></xw:action></xw:event>
-      </xw:menuItem>      
+      <xw:menuItem label="Details" onclick="alert('clicked Details');"/>
       <xw:menuItem label="Change Password"/>
     </xw:menuItem>
     <xw:menuItem label="Deployment"/>
@@ -38,18 +38,6 @@
     <div id="content"/>
     
     <script type="text/javascript">    
-      function renderView() {
-        var rootNode = xw.Sys.parseXml(document.getElementById("src").value);
-        var def = new xw.DefinitionParser().parse(rootNode.childNodes[0]);
-        
-        var view = new xw.View();
-        xw.Controller.parseChildren(view, def.children, view);
-        var container = document.getElementById("content");
-
-        xw.Sys.clearChildren(container);
-        view.render(container);
-      }
-      
       renderView();
     </script>
 

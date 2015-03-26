@@ -30,7 +30,7 @@ org.xwidgets.core.VerticalMenu = xw.Visual.extend({
       menuItem.control.className = "open";
       var anchor = document.createElement("a");
       anchor.href = "#";
-      anchor.appendChild(document.createTextNode(menuItem.label.value === null ? "" : menuItem.label.value));
+      anchor.appendChild(document.createTextNode(menuItem.label === null ? "" : menuItem.label));
       menuItem.control.appendChild(anchor);
       
       container.appendChild(menuItem.control);

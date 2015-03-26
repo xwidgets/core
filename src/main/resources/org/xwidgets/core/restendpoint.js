@@ -22,15 +22,15 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
   
     var cb = xw.Sys.isDefined(params.callback) ?
       params.callback :
-      (this.callback.value ? this.callback.value : function() {});
+      (this.callback ? this.callback : function() {});
 
     var m = xw.Sys.isDefined(params.method) ? params.method : (method ? method : "GET");
 
-    var url = this.url.value;  
+    var url = this.url;  
     
     for (var c in this.children) {
-      if (c instanceof org.xwidgets.core.EndpointMethod && c.method.value == method) {
-        url = c.url.value;
+      if (c instanceof org.xwidgets.core.EndpointMethod && c.method == method) {
+        url = c.url;
       }
     }
     
@@ -60,7 +60,7 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
       callback: function(response, r) { cb(response, r); },
       path: url,
       content: content,
-      decorator: this.decorator.value,
+      decorator: this.decorator,
       headers: {
         "Content-Type": "application/json;charset=UTF-8"
       }
@@ -79,7 +79,7 @@ org.xwidgets.core.RestEndpoint = xw.NonVisual.extend({
     this.invoke("DELETE", params);
   },
   toString: function() {
-    return "org.xwidgets.core.RestEndpoint[" + this.method.value + ":" + this.url + "]";
+    return "org.xwidgets.core.RestEndpoint[" + this.method + ":" + this.url + "]";
   }
 });
 //# sourceURL=restendpoint.js
