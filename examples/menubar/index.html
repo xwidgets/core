@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xw="http://xwidgets.org">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Menu Bar - XWidgets</title>
+    
+    <link href="../../src/main/resources/theme/default/xw.css" rel="stylesheet" type="text/css"/>
+    <link href="../../bower_components/fontawesome/css/font-awesome.css" rel="stylesheet" type="text/css"/>
+    
+    <script src="../../src/main/resources/xw.js" type="text/javascript"></script>
+    <script src="../../src/main/resources/org/xwidgets/core/button.js" type="text/javascript"></script>
+    <script src="../../src/main/resources/org/xwidgets/core/menubar.js" type="text/javascript"></script>
+    <script src="../../src/main/resources/org/xwidgets/core/menuitem.js" type="text/javascript"></script>
+    
+    <script src="../examples.js" type="text/javascript"></script>     
+  </head>
+  <body>
+
+    <textarea id="src" style="width:800px;height:100px;font-family:courier">
+<?xml version="1.0" encoding="UTF-8"?>
+<xw:view xmlns="http://www.w3.org/1999/xhtml" xmlns:xw="http://xwidgets.org/core">
+  <xw:menuBar>
+    <xw:menuItem label="File">
+      <xw:menuItem label="New">
+        <xw:menuItem label="Empty Project"/>
+        <xw:menuItem label="Project Wizard"/>
+      </xw:menuItem>
+      <xw:menuDivider/>
+      <xw:menuItem label="Open"/>
+      <xw:menuItem label="Download"/>
+    </xw:menuItem>
+    <xw:menuItem label="Project">
+      <xw:menuItem label="Properties" onclick="alert('Project Properties');"/>
+    </xw:menuItem>
+    <xw:menuItem label="Security">
+      <xw:menuItem label="Change Password"/>
+    </xw:menuItem>
+    <xw:menuItem label="Help">
+      <xw:menuItem label="About"/>
+    </xw:menuItem>
+  </xw:menuBar>
+
+</xw:view>
+    </textarea>
+    
+    <div style="margin:4px">
+      <input type="button" value="Update" onclick="javascript:renderView()"/>
+    </div>
+
+    <div id="content"/>
+    
+    <script type="text/javascript">
+      renderView();
+    </script>
+
+  </body>
+
+</html>

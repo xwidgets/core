@@ -3,21 +3,18 @@ package("org.xwidgets.core");
 org.xwidgets.core.MenuDivider = xw.Visual.extend({
   _constructor: function() {
     this._super();
-    this.control = null;
   },
   render: function(container) {
-    if (this.control == null) {
-      this.control = document.createElement("hr");
-      container.appendChild(this.control);
-    }
+    this.menu.renderDivider(this, container);
   }
 });
 
 org.xwidgets.core.MenuItem = xw.Visual.extend({
   _constructor: function(label) {
     this._super();
-    this.registerProperty("label", {default: label});
+    this.registerProperty("label", {default: ""});
     this.registerProperty("icon");
+    this.registerProperty("enabled", {default: true});
     this.registerProperty("rendered", {default: true});
     this.registerProperty("styleClass", {default: "xw_menuitem"});
     this.registerProperty("selectedStyleClass", {default: "xw_menuitem_selected"});

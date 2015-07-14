@@ -42,7 +42,7 @@ div.xw_menuitem:hover {
 
 div.xw_submenu {
   background: url(submenu-bg.png) top left repeat-y;
-  background-color: #f2f2f2;
+  background-color: #ffffff; /*#f2f2f2;*/
   padding: 1px 1px 1px 1px;
   outline: 1px solid #ddd;
   border-top: 1px solid #fff;
@@ -53,6 +53,10 @@ div.xw_submenu div {
   float: none;
   margin-left: 0px;
   padding-left: 32px;
+}
+
+div.xw_submenu hr {
+  margin-left: 26px;
 }
 
 div.xw_submenu div i {

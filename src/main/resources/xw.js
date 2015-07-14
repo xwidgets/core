@@ -1491,7 +1491,13 @@ xw.Property.prototype.setValue = function(val) {
     this.value = xw.EL.createBinding(this.owner, this.name, val);
     this.binding = val;
   } else {
-    this.value = val;
+    if ("true" == val) {
+      this.value = true;
+    } else if ("false" == val) {
+      this.value = false;
+    } else {
+      this.value = val;
+    }
     delete this["binding"];
   }
   if (xw.Sys.isDefined(this.onChange)) {

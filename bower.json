@@ -1,0 +1,24 @@
+{
+  "name": "xwidgets",
+  "version": "0.0.0",
+  "authors": [
+    "sbryzak <sbryzak@gmail.com>"
+  ],
+  "description": "XWidgets HTML5 Component Framework",
+  "main": "server.js",
+  "moduleType": [
+    "es6"
+  ],
+  "license": "Apache V2",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "patternfly": "1.3.0",
+    "fontawesome": "~4.3.0"
+  }
+}

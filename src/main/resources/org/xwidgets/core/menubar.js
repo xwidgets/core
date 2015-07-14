@@ -17,6 +17,7 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
       container.appendChild(this.control);
     }
     this.propagateChildProperty(org.xwidgets.core.MenuItem, "menu", this);
+    this.propagateChildProperty(org.xwidgets.core.MenuDivider, "menu", this);
     this.renderChildren(this.control);
   },
   renderItem: function(menuItem, container) {
@@ -35,7 +36,7 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
       menuItem.control.appendChild(sp);
       sp.appendChild(document.createTextNode(xw.Sys.isDefined(menuItem.label) ? menuItem.label : ""));
       
-      if (menuItem.children.length > 0) {
+      if (menuItem.parent != this && menuItem.children.length > 0) {
         var icon = document.createElement("i");
         icon.className ="fa fa-caret-right fa-fw";
         menuItem.control.appendChild(icon);
@@ -63,7 +64,7 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
       
       if (menuItem.children.length > 0) {
         var mouseOverEvent = function(event) {
-          menuItem.mouseOver(event);
+//          menuItem.mouseOver(event);
         }
         xw.Sys.chainEvent(ctl, "mouseover", mouseOverEvent);
       }
@@ -94,7 +95,7 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
     // that will close the menu
     if (!open && this.isOpen()) {
       org.xwidgets.core.MenuBar.openMenu = this;
-      xw.Sys.chainEvent(document.body, "mousedown", org.xwidgets.core.MenuBar.documentMouseDown);
+      xw.Sys.chainEvent(window, "mousedown", org.xwidgets.core.MenuBar.windowMouseDown);
     }
   },
   removeItem: function(menuItem) {
@@ -133,10 +134,10 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
           var containerRect = menuItem.parent.submenuContainer.getBoundingClientRect();
           c.style.top = rect.top + "px";
           c.style.left = (containerRect.right + 1) + "px";
-        } else if (menuItem.parent instanceof org.xwidgets.core.PopupMenu) {
-          var containerRect = menuItem.parent.control.getBoundingClientRect();
-          c.style.top = rect.top + "px";
-          c.style.left = (containerRect.right + 1) + "px";                
+//        } else if (menuItem.parent instanceof org.xwidgets.core.PopupMenu) {
+//          var containerRect = menuItem.parent.control.getBoundingClientRect();
+//          c.style.top = rect.top + "px";
+//          c.style.left = (containerRect.right + 1) + "px";                
         } else {
           c.style.top = (rect.bottom + 1) + "px";
           c.style.left = rect.left + "px";
@@ -154,6 +155,12 @@ org.xwidgets.core.MenuBar = xw.Visual.extend({
       if (xw.Sys.isDefined(menuItem.styleClass) && xw.Sys.isDefined(menuItem.styleClass)) {
         menuItem.control.className = menuItem.styleClass;
       }
+    }
+  },
+  renderDivider: function(divider, container) {
+    if (divider.control == null) {
+      divider.control = document.createElement("hr");
+      container.appendChild(divider.control);
     }
   },
   isOpen: function() {
@@ -225,9 +232,9 @@ org.xwidgets.core.MenuBar.mouseOverTimeout = null;
 
 org.xwidgets.core.MenuBar.openMenu = null;
 
-org.xwidgets.core.MenuBar.documentMouseDown = function(event) {
+org.xwidgets.core.MenuBar.windowMouseDown = function(event) {
   org.xwidgets.core.MenuBar.openMenu.close();
-  xw.Sys.unchainEvent(document.body, "mousedown", org.xwidgets.core.MenuBar.documentMouseDown);
+  xw.Sys.unchainEvent(window, "mousedown", org.xwidgets.core.MenuBar.windowMouseDown);
   xw.Sys.cancelEventBubble(event);
 };
 //# sourceURL=menubar.js
